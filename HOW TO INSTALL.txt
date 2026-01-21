@@ -1,0 +1,43 @@
+_____________________
+FIRST TIME INSTALLING
+
+Install the test script to check the thresholds array:
+https://youtu.be/QyBElQ__YNw?t=5396
+
+This version can be used to install for the first time.
+Check the process demonstrated in the video:
+https://youtu.be/oe4oWIWnGCw
+
+
+_____________________
+UPDATING THE FIRMWARE
+
+Your controller is already running as a controller
+with a previous version!
+
+- Copy the content in the Arduino folder to the Arduino folder in your Documents location
+- Open your previous version script and COPY THE THRESHOLSD variable.
+  It should look like this:
+
+const int thresholds[7] = 
+{
+  236, // button 3
+  395, // button 5
+  493, // button 6
+  178, // buttons 3 & 5
+  193, // buttons 3 & 6
+  284, // buttons 5 & 6
+  153  // buttons 3 & 5 & 6
+};
+
+- Close that script and open the newest version.
+- Locate the thresholds in the CONSTANT VARIABLES section (line 171 to 180).
+- Replace with the copy from the last script.
+
+- In the controller, open the menu by long pressing the T button
+- In the Arduino IDE, select the Arduino Micro COM x (it's always different)
+- Make sure you don't have another ProMicro connected - You might write the code into the wrong one!
+- Upload the code (Ctrl + U).
+
+Once done, the controller displays the main screen with the new version number at the bottom left.
+At this point, is ready to use

@@ -6,6 +6,7 @@ Using the forked [ArduinoJoystickWithFFBLibrary by https://github.com/bogdan-dum
 
   My thresholds:
 
+```
 const int thresholds[7] = 
 {
   220, // button 3
@@ -16,3 +17,6 @@ const int thresholds[7] =
   258, // buttons 5 & 6
   140  // buttons 3 & 5 & 6
 }; 
+```
+
+Also, good to know that the reset button is beneath the oled display, on the right side, so just push it lightly to reset the pro micro.

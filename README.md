@@ -5,6 +5,7 @@ I have not made anything in this repo, currently this is just a clone of the fir
 This unofficial repo tries to fix a few issues with the 3.2 firmware
 
 Using the forked [ArduinoJoystickWithFFBLibrary by https://github.com/bogdan-dumitrescu](https://github.com/bogdan-dumitrescu/ArduinoJoystickWithFFBLibrary)
+(note: this fork seems to be bugged, for example springeffect is broken, I'm currently looking for a way to test/debug all ffb effect types)
 
   My thresholds:
 

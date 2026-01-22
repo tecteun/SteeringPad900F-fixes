@@ -1,6 +1,8 @@
   Unofficial SteeringPad900F firmware
 
-This unofficial repo fixes a few issues with the 3.2 firmware found on https://www.printables.com/model/1223875-steering-pad-900-f/files
+I have not made anything in this repo, currently this is just a clone of the firmware found at https://www.printables.com/model/1223875-steering-pad-900-f/files, all the credits go to Rui Caldas. 
+
+This unofficial repo tries to fix a few issues with the 3.2 firmware
 
 Using the forked [ArduinoJoystickWithFFBLibrary by https://github.com/bogdan-dumitrescu](https://github.com/bogdan-dumitrescu/ArduinoJoystickWithFFBLibrary)
 
@@ -20,3 +22,5 @@ const int thresholds[7] =
 ```
 
 Also, good to know that the reset button is beneath the oled display, on the right side, so just push it lightly to reset the pro micro.
+
+

@@ -50,16 +50,16 @@ void PIDReportHandler::StopEffect(uint8_t id)
 	if (id > MAX_EFFECTS)
 		return;
 	g_EffectStates[id].state &= ~MEFFECTSTATE_PLAYING;
+	pidBlockLoad.ramPoolAvailable += SIZE_EFFECT;
 }
 
 void PIDReportHandler::FreeEffect(uint8_t id)
 {
 	if (id > MAX_EFFECTS)
 		return;
-	g_EffectStates[id].state = MEFFECTSTATE_FREE;
+	g_EffectStates[id].state = 0;
 	if (id < nextEID)
 		nextEID = id;
-	pidBlockLoad.ramPoolAvailable += SIZE_EFFECT;
 }
 
 void PIDReportHandler::FreeAllEffects(void)
@@ -232,7 +232,7 @@ void PIDReportHandler::CreateNewEffect(USB_FFBReport_CreateNewEffect_Feature_Dat
 	}
 }
 
-void PIDReportHandler::UnpackUsbData(uint8_t *data, uint16_t len)
+void PIDReportHandler::UppackUsbData(uint8_t* data, uint16_t len)
 {
 	//Serial.print("len:");
 	//Serial.println(len);

@@ -59,6 +59,7 @@
 #define X_AXIS_ENABLE                      0x01
 #define Y_AXIS_ENABLE                      0x02
 #define FORCE_FEEDBACK_MAXGAIN              100
+#define DEG_TO_RAD              ((float)((float)3.14159265359 / 180.0))
 
 struct Gains{
     uint8_t totalGain         = FORCE_FEEDBACK_MAXGAIN;
@@ -164,7 +165,7 @@ private:
 	int32_t SawtoothUpForceCalculator(volatile TEffectState& effect);
 	int32_t ConditionForceCalculator(volatile TEffectState& effect, float metric, uint8_t axis);
 	void forceCalculator(int32_t* forces);
-	int32_t getEffectForce(volatile TEffectState& effect, Gains _gains, EffectParams _effect_params);
+	int32_t getEffectForce(volatile TEffectState& effect, Gains _gains, EffectParams _effect_params, uint8_t axis);
 protected:
 	int buildAndSet16BitValue(bool includeValue, int16_t value, int16_t valueMinimum, int16_t valueMaximum, int16_t actualMinimum, int16_t actualMaximum, uint8_t dataLocation[]);
 	int buildAndSetAxisValue(bool includeAxis, int16_t axisValue, int16_t axisMinimum, int16_t axisMaximum, uint8_t dataLocation[]);
@@ -264,7 +265,6 @@ public:
 	void setSteering(int16_t value);
 
 	void setButton(uint8_t button, uint8_t value);
-	void setAllButtons(uint8_t* buttonValues);
 	void pressButton(uint8_t button);
 	void releaseButton(uint8_t button);
 	void setHatSwitch(int8_t hatSwitch, int16_t value);

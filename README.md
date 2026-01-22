@@ -2,7 +2,7 @@
 
 This unofficial repo fixes a few issues with the 3.2 firmware found on https://www.printables.com/model/1223875-steering-pad-900-f/files
 
-Using the forked [ArduinoJoystickWithFFBLibrary by https://github.com/bogdan-dumitrescu](https://github.com/bogdan-dumitrescu/ArduinoJoystickWithFFBLibrary)
+- Filters some judder from the x axis sensor (applyDeadband())
 
   My thresholds:
 

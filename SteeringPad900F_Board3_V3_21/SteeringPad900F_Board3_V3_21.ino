@@ -282,7 +282,7 @@ const int16_t joystickMax = 32767;
   #define motorPinEnable 10
 
 // MENU
-int menuLength = 7;
+byte menuLength = 7;
 
 
 
@@ -342,7 +342,6 @@ bool button3WasPressed;
 bool longPressTriggered;
 long button3StartTime = 0;
 
-bool button13WasPressed;
 bool button13AsFunction;
 bool button13OnHold;
 
@@ -358,24 +357,24 @@ float lutRatio;
 int16_t mappedValue;
 
 // MENU
-int operationMode = 0;
-int oldOperationMode = 0;
-int menuLevel = 0;
-int oldMenuLevel = 0;
-int lastMenuLevel = 1;
+byte operationMode = 0;
+byte oldOperationMode = 0;
+byte menuLevel = 0;
+byte oldMenuLevel = 0;
+byte lastMenuLevel = 1;
 bool reopenLevel = false;
 
 //PEDALS
 float adjusted;
-int brakePedalCalibrationStep = 0;
-int acceleratorPedalCalibrationStep = 0;
+byte brakePedalCalibrationStep = 0;
+byte acceleratorPedalCalibrationStep = 0;
 
 // STEERING
 int16_t steeringSensor;
 int16_t steeringPosition;
 int16_t brakeSensor;
 int16_t acceleratorSensor;
-int steeringCalibrationStep = 0;
+byte steeringCalibrationStep = 0;
 
 // SYSTEM
 // Every for loop variable
@@ -390,7 +389,7 @@ int iBlock;
 //
 void setup()
 {
-  Serial.begin(9600);
+  //Serial.begin(9600);
   #if isFirstTimeUploading
     StoreData(); //This will reset all calibrations - See FEATURES section above!
   #endif
@@ -1274,12 +1273,22 @@ float sqrt_approx(float x)
   return guess;
 }
 
+
+// --- FILTERING ---
+uint16_t lastStableValue = 0;
+uint16_t applyDeadband(uint16_t value) {
+    if ((value > lastStableValue ? value - lastStableValue : lastStableValue - value) > 10)
+      lastStableValue = value;
+    return lastStableValue;
+}
+
 // SEND DATA TO JOYSTICK
 void ProcessDataAndApply()
 {
   // STEERING
-  steeringPosition = mapLUT(steeringSensor);
-
+  //steeringPosition = mapLUT(steeringSensor);
+  steeringPosition = mapLUT(applyDeadband(steeringSensor));
+  
   // GET FORCE FEEDBACK
   Joystick.getForce(forces);
   //Serial.println(forces[0]);

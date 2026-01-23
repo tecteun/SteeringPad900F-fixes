@@ -1290,25 +1290,26 @@ void ProcessDataAndApply()
   // STEERING
   //steeringPosition = mapLUT(steeringSensor);
   steeringPosition = mapLUT(applyDeadband(steeringSensor));
-  
+
+  // joystickMin, joystickMax
+  // set X Axis Spring Effect Param
+  //map(value, realMinimum, realMaximum, actualMinimum, actualMaximum);
+  params[0].springMaxPosition = joystickMax;
+  params[0].springPosition = steeringPosition;
+  params[0].damperMaxVelocity = joystickMax;
+  params[0].damperVelocity = steeringPosition;
+  params[0].inertiaMaxAcceleration = joystickMax;
+  params[0].inertiaAcceleration = steeringPosition;
+  params[0].frictionMaxPositionChange = joystickMax;
+  params[0].frictionPositionChange = steeringPosition;
+  Joystick.setEffectParams(params);
+
   // GET FORCE FEEDBACK
   Joystick.getForce(forces);
   //Serial.println(forces[0]);
 
   // Apply position
   Joystick.setXAxis(steeringPosition);
-
-  // joystickMin, joystickMax
-  // set X Axis Spring Effect Param
-  params[0].springMaxPosition = joystickMax*2;
-  params[0].springPosition = steeringPosition;
-  params[0].damperMaxVelocity = joystickMax*2;
-  params[0].damperVelocity = steeringPosition;
-  params[0].inertiaMaxAcceleration = joystickMax*2;
-  params[0].inertiaAcceleration = steeringPosition;
-  params[0].frictionMaxPositionChange = joystickMax*2;
-  params[0].frictionPositionChange = steeringPosition;
-  Joystick.setEffectParams(params);
 
  
   //                       damping

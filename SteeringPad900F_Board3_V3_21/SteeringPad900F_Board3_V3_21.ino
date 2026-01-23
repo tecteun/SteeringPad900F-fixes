@@ -435,6 +435,7 @@ void setup()
 	//gains[0].customGain        = 0;
   
   Joystick.setGains(gains);
+  
   //Joystick.setEffectParams(params);
 
   // START FORCE FEEDBACK /////////////////////////////////////////
@@ -1297,7 +1298,17 @@ void ProcessDataAndApply()
   // Apply position
   Joystick.setXAxis(steeringPosition);
 
-
+  // joystickMin, joystickMax
+  // set X Axis Spring Effect Param
+  params[0].springMaxPosition = joystickMax*2;
+  params[0].springPosition = steeringPosition;
+  params[0].damperMaxVelocity = joystickMax*2;
+  params[0].damperVelocity = steeringPosition;
+  params[0].inertiaMaxAcceleration = joystickMax*2;
+  params[0].inertiaAcceleration = steeringPosition;
+  params[0].frictionMaxPositionChange = joystickMax*2;
+  params[0].frictionPositionChange = steeringPosition;
+  Joystick.setEffectParams(params);
 
  
   //                       damping

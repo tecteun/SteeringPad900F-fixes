@@ -148,9 +148,6 @@ ADS1115 ADS(0x48);
 #define I2C_ADDRESS 0x3C
 SSD1306AsciiAvrI2c oled;
 
-// EEPROM
-#include <EEPROM.h>
-
 // JOYSTICK
 #include <Joystick.h>
 
@@ -267,7 +264,6 @@ const unsigned long LONG_PRESS_THRESHOLD = 1000;  // 1 second
 const int DISPLAY_WIDTH = 16;
 
 // EEPROM
-const int EEPROM_START_ADDRESS = 0;
 
 // JOYSTICK
 const int16_t joystickMin = -32767;
@@ -349,14 +345,6 @@ bool button13OnHold;
 // FORCE FEEDBACK
 int32_t forces[1];
 
-//LUT CONVERSION - Steering Wheel linearity Correction
-float lutIn_min;
-float lutIn_max;
-float lutOut_min;
-float lutOut_max;
-float lutRatio;
-int16_t mappedValue;
-
 // MENU
 byte operationMode = 0;
 byte oldOperationMode = 0;
@@ -366,7 +354,6 @@ byte lastMenuLevel = 1;
 bool reopenLevel = false;
 
 //PEDALS
-float adjusted;
 byte brakePedalCalibrationStep = 0;
 byte acceleratorPedalCalibrationStep = 0;
 
@@ -429,9 +416,9 @@ void setup()
 	//gains[0].sawtoothdownGain  = 0;
 	//gains[0].sawtoothupGain    = 0;
 	//gains[0].springGain        = 0;
-	//gains[0].damperGain        = 100;
-	//gains[0].inertiaGain       = 100;
-	//gains[0].frictionGain      = 0;
+	gains[0].damperGain        = 100;
+	gains[0].inertiaGain       = 100;
+	gains[0].frictionGain      = 100;
 	//gains[0].customGain        = 0;
   
   Joystick.setGains(gains);
@@ -1277,36 +1264,51 @@ float sqrt_approx(float x)
 
 
 // --- FILTERING ---
-uint16_t lastStableValue = 0;
-uint16_t applyDeadband(uint16_t value) {
+int16_t lastStableValue = 0;
+int16_t lastVelX = 0;
+int16_t applyDeadband(int16_t value) {
     if ((value > lastStableValue ? value - lastStableValue : lastStableValue - value) > 10)
       lastStableValue = value;
     return lastStableValue;
 }
-
+unsigned long lastEffectsUpdate = 0;
 // SEND DATA TO JOYSTICK
 void ProcessDataAndApply()
 {
   // STEERING
   //steeringPosition = mapLUT(steeringSensor);
   steeringPosition = mapLUT(applyDeadband(steeringSensor));
-
-  // joystickMin, joystickMax
+  
   // set X Axis Spring Effect Param
+  // joystickMin, joystickMax
   //map(value, realMinimum, realMaximum, actualMinimum, actualMaximum);
   params[0].springMaxPosition = joystickMax;
   params[0].springPosition = steeringPosition;
-  params[0].damperMaxVelocity = joystickMax;
-  params[0].damperVelocity = steeringPosition;
-  params[0].inertiaMaxAcceleration = joystickMax;
-  params[0].inertiaAcceleration = steeringPosition;
-  params[0].frictionMaxPositionChange = joystickMax;
-  params[0].frictionPositionChange = steeringPosition;
+  
+  unsigned long currentMillis = millis();
+  int16_t diffTime = currentMillis - lastEffectsUpdate;
+  if(diffTime > 0){
+    lastEffectsUpdate = currentMillis;
+    int16_t positionChangeX = steeringPosition - lastPosition;
+    int16_t velX = positionChangeX / diffTime;
+    int16_t accelX = ((velX - lastVelX) * 100) / diffTime;
+
+    params[0].frictionPositionChange = -1*velX;
+    params[0].inertiaAcceleration = -1*abs(accelX);
+    params[0].damperVelocity = -1*velX;
+    lastVelX = velX;
+    //oled.clear();
+    //oled.print(velX);
+    //CleanLineln();
+    //oled.print(accelX);
+  }
+  params[0].damperMaxVelocity = 40;
+  params[0].inertiaMaxAcceleration = 65;
+  params[0].frictionMaxPositionChange = 40;
   Joystick.setEffectParams(params);
 
   // GET FORCE FEEDBACK
   Joystick.getForce(forces);
-  //Serial.println(forces[0]);
 
   // Apply position
   Joystick.setXAxis(steeringPosition);
@@ -1314,7 +1316,7 @@ void ProcessDataAndApply()
  
   //                       damping
   //                         velocity
-  int16_t finalForce = forces[0] + (-(steeringPosition - lastPosition)) * 0.005; //(-velocity * (0.01 - ((float)forceGain / 200.0) * (0.01 - 0.001)));;
+  int16_t finalForce = forces[0];// + (-(steeringPosition - lastPosition)) * 0.005; //(-velocity * (0.01 - ((float)forceGain / 200.0) * (0.01 - 0.001)));;
   
   lastPosition = steeringPosition;
 
@@ -1452,11 +1454,10 @@ int16_t mapLUT(int16_t inputValue)
 //  ██      ██      ██      ██   ██ ██    ██ ██  ██  ██ 
 //  ███████ ███████ ██      ██   ██  ██████  ██      ██ 
 // 
+#include <avr/eeprom.h>
 
 void StoreData()
 {
-  int address = EEPROM_START_ADDRESS;
-
   // ADDRESS BOOK
   // 0 (22 bytes) Steering LUT Array
   // 21
@@ -1480,26 +1481,26 @@ void StoreData()
   // Steering LUT Array
   for (i = 0; i < 11; i++)
   {
-    EEPROM.put(i * sizeof(int16_t), steeringSensorMapLUT[i]);
+    eeprom_update_word((uint16_t*)(i * sizeof(int16_t)), steeringSensorMapLUT[i]);
   }
   
   // Brake Pedal
-  EEPROM.put(22, brakeSensorMin);
-  EEPROM.put(24, brakeSensorMax);
+  eeprom_update_word((uint16_t*)22, brakeSensorMin);
+  eeprom_update_word((uint16_t*)24, brakeSensorMax);
   
   // Accelerator Pedal
-  EEPROM.put(26, acceleratorSensorMin);
-  EEPROM.put(28, acceleratorSensorMax);
+  eeprom_update_word((uint16_t*)26, acceleratorSensorMin);
+  eeprom_update_word((uint16_t*)28, acceleratorSensorMax);
   
   // Force Feedback Gain
-  EEPROM.put(30, forceGain);
+  eeprom_update_word((uint16_t*)30, forceGain);
   
   // Force Feedback Active
-  EEPROM.put(32, forceActive);
+  eeprom_update_byte((uint8_t*)32, forceActive);
 
   // Store Easing Modes as one byte each
-  EEPROM.put(33, (uint8_t) brakeEase);
-  EEPROM.put(34, (uint8_t) acceleratorEase);
+  eeprom_update_byte((uint8_t*)33, (uint8_t) brakeEase);
+  eeprom_update_byte((uint8_t*)34, (uint8_t) acceleratorEase);
 }
 
 void ReadData()
@@ -1508,32 +1509,29 @@ void ReadData()
   // Steering LUT Array
   for (i = 0; i < 11; i++)
   {
-    EEPROM.get(i * sizeof(int16_t), steeringSensorMapLUT[i]);
+    steeringSensorMapLUT[i] = eeprom_read_word((uint16_t*)(i * sizeof(int16_t)));
     //Serial.println(steeringSensorMapLUT[i]);
   }
 
-
   // Break Pedal
-  EEPROM.get(22, brakeSensorMin);
-  EEPROM.get(24, brakeSensorMax);
+  brakeSensorMin = eeprom_read_word((uint16_t*)22);
+  brakeSensorMax = eeprom_read_word((uint16_t*)24);
 
-  
   // Accelerator Pedal
-  EEPROM.get(26, acceleratorSensorMin);
-  EEPROM.get(28, acceleratorSensorMax);
+  acceleratorSensorMin = eeprom_read_word((uint16_t*)26);
+  acceleratorSensorMax = eeprom_read_word((uint16_t*)28);
 
   // Force Feedback Gain
-  EEPROM.get(30, forceGain);
+  forceGain = eeprom_read_word((uint16_t*)30);
   
   // Force Feedback Active
-  EEPROM.get(32, forceActive);
+  forceActive = eeprom_read_byte((uint8_t*)32);
 
   // Read the Easing Modes
   uint8_t temp;
-  EEPROM.get(33, temp);
+  temp = eeprom_read_byte((uint8_t*)33);
   brakeEase = static_cast<EasingMode>(temp);
   
-  EEPROM.get(34, temp);
+  temp = eeprom_read_byte((uint8_t*)34);
   acceleratorEase = static_cast<EasingMode>(temp);
-  
 }

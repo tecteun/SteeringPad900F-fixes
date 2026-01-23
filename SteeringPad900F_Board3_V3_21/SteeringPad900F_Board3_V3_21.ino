@@ -138,6 +138,7 @@ mmicro.build.extra_flags={build.usb_flags}
 //  ██ ██   ████  ██████ ███████  ██████  ███████ ██  ██████  ██   ████ ███████ 
 
 // ADC
+#include <DigitalWriteFast.h>
 #include "ADS1X15.h"
 ADS1115 ADS(0x48);
 

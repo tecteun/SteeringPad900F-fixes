@@ -1222,6 +1222,7 @@ float sqrt_approx(float x)
 int16_t lastStableValue = 0;
 int16_t lastX = 0;
 int16_t lastVelX = 0;
+int16_t lastAccelX = 0;
 unsigned long lastEffectsUpdate = 0;
 
 int16_t applyDeadband(int16_t value) {
@@ -1243,17 +1244,18 @@ void calculateEffectParams(int16_t steeringPosition){
     lastEffectsUpdate = currentMillis;
     int16_t positionChangeX = (int16_t)((uint16_t)steeringPosition - (uint16_t)lastX);
     int16_t velX = positionChangeX / diffTime;
-    int16_t accelX = ((velX - lastVelX) * 100) / diffTime;
+    int16_t accelX = ((velX - lastVelX) * 5000) / diffTime;
 
     params[0].frictionPositionChange = -velX;
-    params[0].inertiaAcceleration = -accelX;
+    params[0].inertiaAcceleration = -(accelX+lastAccelX)/2;
     params[0].damperVelocity = -velX;
     lastVelX = velX;
+    lastAccelX = accelX;
     lastX = steeringPosition;   
   }
-  params[0].damperMaxVelocity = 40;
-  params[0].inertiaMaxAcceleration = 40;
-  params[0].frictionMaxPositionChange = 40;
+  params[0].damperMaxVelocity = 20;
+  params[0].inertiaMaxAcceleration = 250;
+  params[0].frictionMaxPositionChange = 20;
   Joystick.setEffectParams(params);
 }
 
@@ -1272,11 +1274,11 @@ void ProcessDataAndApply()
 
   // GET FORCE FEEDBACK
   Joystick.getForce(forces);
-  /*
+  
   oled.clear();
   oled.print("force:");
   oled.print(forces[0]);
-  */
+  
   //                       damping
   //                         velocity
   int16_t finalForce = forces[0];// + (-(steeringPosition - lastPosition)) * 0.005; //(-velocity * (0.01 - ((float)forceGain / 200.0) * (0.01 - 0.001)));;

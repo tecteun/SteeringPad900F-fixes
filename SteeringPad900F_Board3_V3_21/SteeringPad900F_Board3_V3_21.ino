@@ -299,40 +299,12 @@ byte menuLength = 7;
 
 // BUTTONS
 int sensorValues[4];
-bool buttons[15] = {false};
+bool buttonsMux[15] = {false};
 
-bool button01;
-bool button02;
-bool button03;
-bool button04;
-bool button05;
-bool button06;
-bool button07;
-bool button08;
-bool button09;
-bool button10;
-bool button11;
-bool button12;
-bool button13;
-bool button14;
-bool button15;
+bool button[16];
 bool buttonMenu;
 
-bool oldButton01;
-bool oldButton02;
-bool oldButton03;
-bool oldButton04;
-bool oldButton05;
-bool oldButton06;
-bool oldButton07;
-bool oldButton08;
-bool oldButton09;
-bool oldButton10;
-bool oldButton11;
-bool oldButton12;
-bool oldButton13;
-bool oldButton14;
-bool oldButton15;
+bool oldButton[16];
 bool oldButtonMenu;
 
 bool button3WasPressed;
@@ -494,25 +466,25 @@ void loop() {
 void MenuOperations()
 {
 
-  if (button03 && !oldButton03 && menuLevel != 0)  // NEXT OPTION
+  if (button[3] && !oldButton[3] && menuLevel != 0)  // NEXT OPTION
   {
     menuLevel += 1;
     if (menuLevel > menuLength) menuLevel = 1;
   }
   
   // GO TO SAVE CONFIRMATION
-  if (button04 && !oldButton04 && menuLevel != 0) 
+  if (button[4] && !oldButton[4] && menuLevel != 0) 
   {
     DisplayConfirmationScreen();
     lastMenuLevel = menuLevel;
     menuLevel = 0;
 
-  } else if (button04 && !oldButton04 && menuLevel == 0)  // GO TO SAVE CONFIRMATION
+  } else if (button[4] && !oldButton[4] && menuLevel == 0)  // GO TO SAVE CONFIRMATION
   {
     ReadData();
     DisplayMainScreen();
     operationMode = 0;
-  } else if (button05 && !oldButton05 && menuLevel == 0)  // GO TO SAVE CONFIRMATION
+  } else if (button[5] && !oldButton[5] && menuLevel == 0)  // GO TO SAVE CONFIRMATION
   {
     StoreData();
     ReadData();
@@ -546,7 +518,7 @@ void MenuOperations()
     else { oled.print(F("Yes")); }
     CleanLine();
     DisplayMenuChange();
-    if (button05 && !oldButton05)  // SET NEW VALUE
+    if (button[5] && !oldButton[5])  // SET NEW VALUE
     {
       forceActive = !forceActive;
       digitalWrite(10, forceActive);
@@ -579,7 +551,7 @@ void MenuOperations()
     CleanLine();
     DisplayMenuSet();
 
-    if (button05 && !oldButton05)  // SET NEW VALUE
+    if (button[5] && !oldButton[5])  // SET NEW VALUE
     {
       forceGain = newGain;
     }
@@ -621,7 +593,7 @@ void MenuOperations()
     }
     CleanLine();
 
-    if (button05 && !oldButton05)
+    if (button[5] && !oldButton[5])
     {
       brakeEase = (EasingMode)(((int)brakeEase + 1) % 3);
     }
@@ -663,7 +635,7 @@ void MenuOperations()
     }
     CleanLine();
 
-    if (button05 && !oldButton05)
+    if (button[5] && !oldButton[5])
     {
       acceleratorEase = (EasingMode)(((int)acceleratorEase + 1) % 3);
     }
@@ -691,7 +663,7 @@ void MenuOperations()
       DisplayMenuStart();
     }
 
-    if (button05 && button05 != oldButton05)
+    if (button[5] && button[5] != oldButton[5])
     {
       switch (steeringCalibrationStep)
       {
@@ -835,7 +807,7 @@ void MenuOperations()
       DisplayMenuStart();
     }
 
-    if (button05 && button05 != oldButton05)
+    if (button[5] && button[5] != oldButton[5])
     {
       switch (brakePedalCalibrationStep)
       {
@@ -896,7 +868,7 @@ void MenuOperations()
       DisplayMenuStart();
     }
 
-    if (button05 && button05 != oldButton05)
+    if (button[5] && button[5] != oldButton[5])
     {
       switch (acceleratorPedalCalibrationStep)
       {
@@ -1087,37 +1059,37 @@ void ReadButtons()
 
   for (i = 0; i < 15; i++)
   {
-    buttons[i] = false;
+    buttonsMux[i] = false;
   }
 
   for (i = 0; i < 4; i++)
   {
-    if (abs(sensorValues[i] - thresholds[0]) <= errorMargin) { buttons[i * 3] = true; } // Button A
-    if (abs(sensorValues[i] - thresholds[1]) <= errorMargin) { buttons[i * 3 + 1] = true; } // Button B
-    if (abs(sensorValues[i] - thresholds[2]) <= errorMargin) { buttons[i * 3 + 2] = true; } // Button C
-    if (abs(sensorValues[i] - thresholds[3]) <= errorMargin) { buttons[i * 3] = true; buttons[i * 3 + 1] = true; } // A + B
-    if (abs(sensorValues[i] - thresholds[4]) <= errorMargin) { buttons[i * 3] = true; buttons[i * 3 + 2] = true; } // A + C
-    if (abs(sensorValues[i] - thresholds[5]) <= errorMargin) { buttons[i * 3 + 1] = true; buttons[i * 3 + 2] = true; } // B + C
-    if (abs(sensorValues[i] - thresholds[6]) <= errorMargin) { buttons[i * 3] = true; buttons[i * 3 + 1] = true; buttons[i * 3 + 2] = true; } // A + B + C
+    if (abs(sensorValues[i] - thresholds[0]) <= errorMargin) { buttonsMux[i * 3] = true; } // Button A
+    if (abs(sensorValues[i] - thresholds[1]) <= errorMargin) { buttonsMux[i * 3 + 1] = true; } // Button B
+    if (abs(sensorValues[i] - thresholds[2]) <= errorMargin) { buttonsMux[i * 3 + 2] = true; } // Button C
+    if (abs(sensorValues[i] - thresholds[3]) <= errorMargin) { buttonsMux[i * 3] = true; buttonsMux[i * 3 + 1] = true; } // A + B
+    if (abs(sensorValues[i] - thresholds[4]) <= errorMargin) { buttonsMux[i * 3] = true; buttonsMux[i * 3 + 2] = true; } // A + C
+    if (abs(sensorValues[i] - thresholds[5]) <= errorMargin) { buttonsMux[i * 3 + 1] = true; buttonsMux[i * 3 + 2] = true; } // B + C
+    if (abs(sensorValues[i] - thresholds[6]) <= errorMargin) { buttonsMux[i * 3] = true; buttonsMux[i * 3 + 1] = true; buttonsMux[i * 3 + 2] = true; } // A + B + C
   }
 
-  button01 = !digitalRead(4);
-  button02 = !digitalRead(7);
+  button[1] = !digitalRead(4);
+  button[2] = !digitalRead(7);
 
   CheckButton3Press();
-  button04 = buttons[6];
-  button05 = buttons[10];
-  button06 = buttons[11];
-  button07 = buttons[7];
-  button08 = buttons[8];
-  if (!button13OnHold) button09 = buttons[3];
-  button10 = buttons[4];
-  if (!button13OnHold) button11 =  buttons[5];
-  button12 = buttons[1];
+  button[4] = buttonsMux[6];
+  button[5] = buttonsMux[10];
+  button[6] = buttonsMux[11];
+  button[7] = buttonsMux[7];
+  button[8] = buttonsMux[8];
+  if (!button13OnHold) button[9] = buttonsMux[3];
+  button[10] = buttonsMux[4];
+  if (!button13OnHold) button[11] =  buttonsMux[5];
+  button[12] = buttonsMux[1];
   CheckButton13press();
   if (button13OnHold)
   {
-    if(buttons[3] || buttons[5])
+    if(buttonsMux[3] || buttonsMux[5])
     {
       if(!button13AsFunction) button13AsFunction = true;
     }
@@ -1125,51 +1097,39 @@ void ReadButtons()
 
   if (button13AsFunction)
   {
-    button14 = buttons[3];
-    button15 = buttons[5];
+    button[14] = buttonsMux[3];
+    button[15] = buttonsMux[5];
   }
 }
 
 
 void UpdateOldButtons()
 {
-  oldButton01 = button01;
-  oldButton02 = button02;
-  oldButton03 = button03;
-  oldButton04 = button04;
-  oldButton05 = button05;
-  oldButton06 = button06;
-  oldButton07 = button07;
-  oldButton08 = button08;
-  oldButton09 = button09;
-  oldButton10 = button10;
-  oldButton11 = button11;
-  oldButton12 = button12;
-  oldButton13 = button13;
-  oldButton14 = button14;
-  oldButton15 = button15;
+  for (i = 1; i < 16; i++){
+    oldButton[i] = button[i];
+  }
   oldButtonMenu = buttonMenu;
 }
 
 
 void CheckButton13press()
 {
-  if (button13) button13 = false; //reset button on next loop
-  if (buttons[2])
+  if (button[13]) button[13] = false; //reset button on next loop
+  if (buttonsMux[2])
   {
     if (!button13OnHold)
     {
       button13OnHold = true;
-      button09 = false;
-      button11 = false;
+      button[9] = false;
+      button[11] = false;
     }
   }
-  else if (!buttons[2] && button13OnHold)
+  else if (!buttonsMux[2] && button13OnHold)
   {
     button13OnHold = false;
-    button14 = false;
-    button15 = false;
-    if (!button13AsFunction) button13 = true;
+    button[14] = false;
+    button[15] = false;
+    if (!button13AsFunction) button[13] = true;
     button13AsFunction = false;
   }
 }
@@ -1177,13 +1137,13 @@ void CheckButton13press()
 
 void CheckButton3Press()
 {
-  if (!buttons[9])
+  if (!buttonsMux[9])
   {
-    if (oldButton03) button03 = false;
+    if (oldButton[3]) button[3] = false;
     if (oldButtonMenu) buttonMenu = false;
   }
 
-  if (buttons[9])
+  if (buttonsMux[9])
   {  // button pressed
     if (!button3WasPressed)
     {
@@ -1209,7 +1169,7 @@ void CheckButton3Press()
       // Detecta a transição: o botão foi solto
       if (!longPressTriggered)
       {
-        button03 = true;
+        button[3] = true;
       }
       // Reinicia os estados para a próxima detecção
       button3WasPressed = false;
@@ -1381,39 +1341,13 @@ void ProcessDataAndApply()
   Joystick.setZAxis(acceleratorFinalValue);
 
   // BUTTONS
-  if (button01 && !oldButton01) Joystick.pressButton(0);
-  if (button02 && !oldButton02) Joystick.pressButton(1);
-  if (button03 && !oldButton03) Joystick.pressButton(2);
-  if (button04 && !oldButton04) Joystick.pressButton(3);
-  if (button05 && !oldButton05) Joystick.pressButton(4);
-  if (button06 && !oldButton06) Joystick.pressButton(5);
-  if (button07 && !oldButton07) Joystick.pressButton(6);
-  if (button08 && !oldButton08) Joystick.pressButton(7);
-  if (button09 && !oldButton09) Joystick.pressButton(8);
-  if (button10 && !oldButton10) Joystick.pressButton(9);
-  if (button11 && !oldButton11) Joystick.pressButton(10);
-  if (button12 && !oldButton12) Joystick.pressButton(11);
-  if (button13 && !oldButton13) Joystick.pressButton(12);
-  if (button14 && !oldButton14) Joystick.pressButton(13);
-  if (button15 && !oldButton15) Joystick.pressButton(14);
+  for (i = 1; i <= 15; i++){
+     if (button[i] && !oldButton[i]) Joystick.pressButton(i-1);
+  }
 
-
-  if (!button01 && oldButton01) Joystick.releaseButton(0);
-  if (!button02 && oldButton02) Joystick.releaseButton(1);
-  if (!button03 && oldButton03) Joystick.releaseButton(2);
-  if (!button04 && oldButton04) Joystick.releaseButton(3);
-  if (!button05 && oldButton05) Joystick.releaseButton(4);
-  if (!button06 && oldButton06) Joystick.releaseButton(5);
-  if (!button07 && oldButton07) Joystick.releaseButton(6);
-  if (!button08 && oldButton08) Joystick.releaseButton(7);
-  if (!button09 && oldButton09) Joystick.releaseButton(8);
-  if (!button10 && oldButton10) Joystick.releaseButton(9);
-  if (!button11 && oldButton11) Joystick.releaseButton(10);
-  if (!button12 && oldButton12) Joystick.releaseButton(11);
-  if (!button13 && oldButton13) Joystick.releaseButton(12);
-  if (!button14 && oldButton14) Joystick.releaseButton(13);
-  if (!button15 && oldButton15) Joystick.releaseButton(14);
-
+  for (i = 1; i <= 15; i++){
+    if (!button[i] && oldButton[i]) Joystick.releaseButton(i-1);
+  }
 }
 
 // RETURN LUT CALCULATED VALUE

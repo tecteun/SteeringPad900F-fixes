@@ -45,7 +45,7 @@
  * If INCLUDE_SCROLLING is nonzero, the scroll feature will included.
  */
 #ifndef INCLUDE_SCROLLING
-#define INCLUDE_SCROLLING 1
+#define INCLUDE_SCROLLING 0
 #endif  // INCLUDE_SCROLLING
 
 /** Initial scroll mode, SCROLL_MODE_OFF,

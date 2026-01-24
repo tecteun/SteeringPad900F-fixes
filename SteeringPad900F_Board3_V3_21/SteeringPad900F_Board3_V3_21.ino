@@ -936,32 +936,19 @@ void CleanLineln()
   oled.println(F("    "));
 }
 
-void DisplayTitleCalibration()
+void DisplayTitle(const __FlashStringHelper* title)
 {
   oled.setInvertMode(false);
-  oled.setRow(0); oled.setCol(0);
-  oled.println(F("CALIBRATION"));
-}
-void DisplayTitleCalibrate()
-{
-  oled.setInvertMode(false);
-  oled.setRow(0); oled.setCol(0);
-  oled.println(F("CALIBRATE STEERING"));
+  oled.setRow(0);
+  oled.setCol(0);
+  oled.println(title);
 }
 
-void DisplayTitleForceFeedback()
-{
-  oled.setInvertMode(false);
-  oled.setRow(0); oled.setCol(0);
-  oled.println(F("FORCE FEEDBACK"));
-}
-
-void DisplayTitlePedalCurve()
-{
-  oled.setInvertMode(false);
-  oled.setRow(0); oled.setCol(0);
-  oled.println(F("PEDAL LINEARITY"));
-}
+// Usage:
+void DisplayTitleCalibration()     { DisplayTitle(F("CALIBRATION")); }
+void DisplayTitleCalibrate()       { DisplayTitle(F("CALIBRATE STEERING")); }
+void DisplayTitleForceFeedback()   { DisplayTitle(F("FORCE FEEDBACK")); }
+void DisplayTitlePedalCurve()      { DisplayTitle(F("PEDAL LINEARITY")); }
 
 void DisplayRotateToAngle()
 {
@@ -987,38 +974,29 @@ void DisplayMainScreen()
   oled.print(F(">")); /////////////////////////////
 }
 
-void DisplayMenuBase()
+void DisplayMenu(const __FlashStringHelper* label, uint8_t spaces)
 {
-  oled.setRow(3); oled.setCol(0);
+  oled.setRow(3);
+  oled.setCol(0);
+
+  // Print " exit "
   oled.setInvertMode(true);
-  oled.print(F(" exit ")); ////////////////////////////
+  oled.print(F(" exit "));
   oled.setInvertMode(false);
-}
-void DisplayMenuSet()
-{
-  DisplayMenuBase();
-  oled.print(F("          ")); //////////////////
+
+  // Print spacing
+  while (spaces--) oled.print(' ');
+
+  // Print second label
   oled.setInvertMode(true);
-  oled.print(F(" set ")); /////////////////////////////
-  oled.setInvertMode(false);
-}
-void DisplayMenuChange()
-{
-  DisplayMenuBase();
-  oled.print(F("       ")); //////////////////
-  oled.setInvertMode(true);
-  oled.print(F(" change ")); /////////////////////////////
+  oled.print(label);
   oled.setInvertMode(false);
 }
 
-void DisplayMenuStart()
-{
-  DisplayMenuBase();
-  oled.print(F("        ")); //////////////////
-  oled.setInvertMode(true);
-  oled.print(F(" start ")); /////////////////////////////
-  oled.setInvertMode(false);
-}
+// Wrappers (optional)
+void DisplayMenuSet()    { DisplayMenu(F(" set "),    10); }
+void DisplayMenuChange() { DisplayMenu(F(" change "), 7); }
+void DisplayMenuStart()  { DisplayMenu(F(" start "),  8); }
 
 void DisplayConfirmationScreen()
 {

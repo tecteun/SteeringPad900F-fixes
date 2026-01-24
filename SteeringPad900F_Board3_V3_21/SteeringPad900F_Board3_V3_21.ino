@@ -233,13 +233,13 @@ enum EasingMode {
 EasingMode brakeEase = EASEIN;
 int16_t brakeSensorMin = 11107;
 int16_t brakeSensorMax = 14793;
-int16_t brakeFinalValue;
+
 
 // Accelerator Pedal settings (Default)
 EasingMode acceleratorEase = LINEAR;
 int16_t acceleratorSensorMin = 10557;
 int16_t acceleratorSensorMax = 14718;
-int16_t acceleratorFinalValue;
+
 
 // FORCE FEEDBACK
 int forceGain = 100;
@@ -405,9 +405,9 @@ void setup()
 	//gains[0].sawtoothdownGain  = 0;
 	//gains[0].sawtoothupGain    = 0;
 	//gains[0].springGain        = 0;
-	gains[0].damperGain        = 100;
-	gains[0].inertiaGain       = 100;
-	gains[0].frictionGain      = 100;
+	//gains[0].damperGain        = 100;
+	//gains[0].inertiaGain       = 100;
+	//gains[0].frictionGain      = 100;
 	//gains[0].customGain        = 0;
   
   Joystick.setGains(gains);
@@ -1220,20 +1220,17 @@ float sqrt_approx(float x)
 
 // --- FILTERING ---
 int16_t lastStableValue = 0;
+int16_t lastX = 0;
 int16_t lastVelX = 0;
+unsigned long lastEffectsUpdate = 0;
+
 int16_t applyDeadband(int16_t value) {
     if ((value > lastStableValue ? value - lastStableValue : lastStableValue - value) > 10)
       lastStableValue = value;
     return lastStableValue;
 }
-unsigned long lastEffectsUpdate = 0;
-// SEND DATA TO JOYSTICK
-void ProcessDataAndApply()
-{
-  // STEERING
-  //steeringPosition = mapLUT(steeringSensor);
-  steeringPosition = mapLUT(applyDeadband(steeringSensor));
-  
+
+void calculateEffectParams(int16_t steeringPosition){
   // set X Axis Spring Effect Param
   // joystickMin, joystickMax
   //map(value, realMinimum, realMaximum, actualMinimum, actualMaximum);
@@ -1244,37 +1241,48 @@ void ProcessDataAndApply()
   int16_t diffTime = currentMillis - lastEffectsUpdate;
   if(diffTime > 0){
     lastEffectsUpdate = currentMillis;
-    int16_t positionChangeX = steeringPosition - lastPosition;
+    int16_t positionChangeX = (int16_t)((uint16_t)steeringPosition - (uint16_t)lastX);
     int16_t velX = positionChangeX / diffTime;
     int16_t accelX = ((velX - lastVelX) * 100) / diffTime;
 
-    params[0].frictionPositionChange = -1*velX;
-    params[0].inertiaAcceleration = -1*abs(accelX);
-    params[0].damperVelocity = -1*velX;
+    params[0].frictionPositionChange = -velX;
+    params[0].inertiaAcceleration = -accelX;
+    params[0].damperVelocity = -velX;
     lastVelX = velX;
-    //oled.clear();
-    //oled.print(velX);
-    //CleanLineln();
-    //oled.print(accelX);
+    lastX = steeringPosition;   
   }
   params[0].damperMaxVelocity = 40;
-  params[0].inertiaMaxAcceleration = 65;
+  params[0].inertiaMaxAcceleration = 40;
   params[0].frictionMaxPositionChange = 40;
   Joystick.setEffectParams(params);
+}
 
-  // GET FORCE FEEDBACK
-  Joystick.getForce(forces);
-
+// SEND DATA TO JOYSTICK
+void ProcessDataAndApply()
+{
+  // STEERING
+  //steeringPosition = mapLUT(steeringSensor);
+  steeringPosition = mapLUT(applyDeadband(steeringSensor));
+  
   // Apply position
   Joystick.setXAxis(steeringPosition);
 
- 
+  // Update state/setEffectParams with steeringPosition
+  calculateEffectParams(steeringPosition);
+
+  // GET FORCE FEEDBACK
+  Joystick.getForce(forces);
+  /*
+  oled.clear();
+  oled.print("force:");
+  oled.print(forces[0]);
+  */
   //                       damping
   //                         velocity
   int16_t finalForce = forces[0];// + (-(steeringPosition - lastPosition)) * 0.005; //(-velocity * (0.01 - ((float)forceGain / 200.0) * (0.01 - 0.001)));;
   
   lastPosition = steeringPosition;
-
+  
   // 4. Limitar força total
   finalForce = constrain(finalForce, -255, 255);
 
@@ -1293,7 +1301,7 @@ void ProcessDataAndApply()
     analogWrite(motorPinPWM, 0);
   }
 
-
+  int16_t brakeFinalValue;
   // BREAK PEDAL
   if (brakeSensor < brakeSensorMin) brakeSensor = brakeSensorMin;
   if (brakeSensor > brakeSensorMax) brakeSensor = brakeSensorMax;
@@ -1314,7 +1322,7 @@ void ProcessDataAndApply()
   Joystick.setYAxis(brakeFinalValue);
 
 
-
+  int16_t acceleratorFinalValue;
   // ACCELERATOR PEDAL
   if (acceleratorSensor < acceleratorSensorMin) acceleratorSensor = acceleratorSensorMin;
   if (acceleratorSensor > acceleratorSensorMax) acceleratorSensor = acceleratorSensorMax;

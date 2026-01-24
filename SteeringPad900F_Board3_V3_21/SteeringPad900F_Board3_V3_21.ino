@@ -148,8 +148,10 @@ ADS1115 ADS(0x48);
 #define I2C_ADDRESS 0x3C
 SSD1306AsciiAvrI2c oled;
 */
+
  
 // DISPLAY
+//#include <Wire.h> // TwoWire, Wire
 #include <AceWire.h>
 using ace_wire::TwoWireInterface;
 #include "SSD1306Ascii.h"
@@ -160,6 +162,8 @@ using WireInterface = TwoWireInterface<TwoWire>;
 WireInterface wireInterface(Wire);
 
 SSD1306AsciiAceWire<WireInterface > oled(wireInterface);
+
+ 
 
 // JOYSTICK
 #include <Joystick.h>

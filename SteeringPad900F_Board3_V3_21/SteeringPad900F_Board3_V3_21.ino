@@ -1239,7 +1239,7 @@ void calculateEffectParams(unsigned long currentMillis, int16_t steeringPosition
   // joystickMin, joystickMax
   //map(value, realMinimum, realMaximum, actualMinimum, actualMaximum);
   params[0].springMaxPosition = joystickMax;
-  params[0].springPosition = steeringPosition;
+  params[0].springPosition = -steeringPosition;
   
   int16_t diffTime = currentMillis - lastEffectsUpdate;
   if(diffTime > 0){

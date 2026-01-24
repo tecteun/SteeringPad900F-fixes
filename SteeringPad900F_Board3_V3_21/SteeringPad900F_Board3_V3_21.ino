@@ -458,6 +458,8 @@ void loop() {
   // IN GAME MODE
   if (operationMode == 0)  
   {
+    processAccelleratorPedal();
+    processBreakPedal();
     ProcessDataAndApply(currentMillis);
     if (buttonMenu) {
       operationMode = 1;  // Enable MENU
@@ -1291,6 +1293,51 @@ void showSensors(){
   
 }
 
+void processBreakPedal(){
+   int16_t brakeFinalValue;
+  // BREAK PEDAL
+  if (brakeSensor < brakeSensorMin) brakeSensor = brakeSensorMin;
+  if (brakeSensor > brakeSensorMax) brakeSensor = brakeSensorMax;
+  switch (brakeEase)
+  {
+    case EASEIN:
+    brakeFinalValue = EaseIn(brakeSensor, brakeSensorMin, brakeSensorMax, joystickMin, joystickMax);
+    break;
+    
+    case LINEAR:
+    brakeFinalValue = map(brakeSensor, brakeSensorMin, brakeSensorMax, joystickMin, joystickMax);
+    break;
+
+    case EASEOUT:
+    brakeFinalValue = EaseOut(brakeSensor, brakeSensorMin, brakeSensorMax, joystickMin, joystickMax);
+    break;
+  }
+  Joystick.setYAxis(brakeFinalValue);
+}
+
+void processAccelleratorPedal(){
+  int16_t acceleratorFinalValue;
+  // ACCELERATOR PEDAL
+  if (acceleratorSensor < acceleratorSensorMin) acceleratorSensor = acceleratorSensorMin;
+  if (acceleratorSensor > acceleratorSensorMax) acceleratorSensor = acceleratorSensorMax;
+  switch (acceleratorEase)
+  {
+    case EASEIN:
+      acceleratorFinalValue = EaseIn(acceleratorSensor, acceleratorSensorMin, acceleratorSensorMax, joystickMin, joystickMax);
+      break;
+      
+    case LINEAR:
+      acceleratorFinalValue = map(acceleratorSensor, acceleratorSensorMin, acceleratorSensorMax, joystickMin, joystickMax);
+      break;
+
+    case EASEOUT:
+      acceleratorFinalValue = EaseOut(acceleratorSensor, acceleratorSensorMin, acceleratorSensorMax, joystickMin, joystickMax);
+      break;
+  }
+
+  Joystick.setZAxis(acceleratorFinalValue);
+}
+
 // SEND DATA TO JOYSTICK
 void ProcessDataAndApply(unsigned long currentMillis)
 {
@@ -1331,48 +1378,6 @@ void ProcessDataAndApply(unsigned long currentMillis)
   {
     analogWrite(motorPinPWM, 0);
   }
-
-  int16_t brakeFinalValue;
-  // BREAK PEDAL
-  if (brakeSensor < brakeSensorMin) brakeSensor = brakeSensorMin;
-  if (brakeSensor > brakeSensorMax) brakeSensor = brakeSensorMax;
-  switch (brakeEase)
-  {
-    case EASEIN:
-    brakeFinalValue = EaseIn(brakeSensor, brakeSensorMin, brakeSensorMax, joystickMin, joystickMax);
-    break;
-    
-    case LINEAR:
-    brakeFinalValue = map(brakeSensor, brakeSensorMin, brakeSensorMax, joystickMin, joystickMax);
-    break;
-
-    case EASEOUT:
-    brakeFinalValue = EaseOut(brakeSensor, brakeSensorMin, brakeSensorMax, joystickMin, joystickMax);
-    break;
-  }
-  Joystick.setYAxis(brakeFinalValue);
-
-
-  int16_t acceleratorFinalValue;
-  // ACCELERATOR PEDAL
-  if (acceleratorSensor < acceleratorSensorMin) acceleratorSensor = acceleratorSensorMin;
-  if (acceleratorSensor > acceleratorSensorMax) acceleratorSensor = acceleratorSensorMax;
-  switch (acceleratorEase)
-  {
-    case EASEIN:
-      acceleratorFinalValue = EaseIn(acceleratorSensor, acceleratorSensorMin, acceleratorSensorMax, joystickMin, joystickMax);
-      break;
-      
-    case LINEAR:
-      acceleratorFinalValue = map(acceleratorSensor, acceleratorSensorMin, acceleratorSensorMax, joystickMin, joystickMax);
-      break;
-
-    case EASEOUT:
-      acceleratorFinalValue = EaseOut(acceleratorSensor, acceleratorSensorMin, acceleratorSensorMax, joystickMin, joystickMax);
-      break;
-  }
-
-  Joystick.setZAxis(acceleratorFinalValue);
 
   // BUTTONS
   for (i = 1; i <= 15; i++){

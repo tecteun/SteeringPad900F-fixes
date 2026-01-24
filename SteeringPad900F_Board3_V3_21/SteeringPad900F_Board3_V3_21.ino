@@ -451,19 +451,20 @@ void loop() {
   // 0 - In Game
   // 1 - In Menu
   // 2 - In Confirmation
-
-  ReadButtons();
+  unsigned long currentMillis = millis();
+  ReadButtons(currentMillis);
   ReadAnalogSensors();
 
   // IN GAME MODE
   if (operationMode == 0)  
   {
-    ProcessDataAndApply();
+    ProcessDataAndApply(currentMillis);
     if (buttonMenu) {
       operationMode = 1;  // Enable MENU
       oled.clear();
       menuLevel = lastMenuLevel; // Set MENU to first setting
     }
+    showSensors();
   }
 
   if (operationMode == 1) MenuOperations();  // IN MENU MODE
@@ -1045,7 +1046,7 @@ void ReadAnalogSensors()
   acceleratorSensor = ADS.readADC(2);
 }
 
-void ReadButtons()
+void ReadButtons(unsigned long currentMillis)
 {
   sensorValues[0] = analogRead(A0);
   sensorValues[1] = analogRead(A1);
@@ -1071,7 +1072,7 @@ void ReadButtons()
   button[1] = !digitalRead(4);
   button[2] = !digitalRead(7);
 
-  CheckButton3Press();
+  CheckButton3Press(currentMillis);
   button[4] = buttonsMux[6];
   button[5] = buttonsMux[10];
   button[6] = buttonsMux[11];
@@ -1130,7 +1131,7 @@ void CheckButton13press()
 }
 
 
-void CheckButton3Press()
+void CheckButton3Press(unsigned long currentMillis)
 {
   if (!buttonsMux[9])
   {
@@ -1143,13 +1144,13 @@ void CheckButton3Press()
     if (!button3WasPressed)
     {
       button3WasPressed = true;
-      button3StartTime = millis();
+      button3StartTime = currentMillis;
       longPressTriggered = false;
     }
     else
     {
       // O botão continua pressionado: verifica se já atingiu o tempo para long press
-      if (!longPressTriggered && (millis() - button3StartTime >= LONG_PRESS_THRESHOLD))
+      if (!longPressTriggered && (currentMillis - button3StartTime >= LONG_PRESS_THRESHOLD))
       {
         longPressTriggered = true;
         buttonMenu = true;
@@ -1231,18 +1232,17 @@ int16_t applyDeadband(int16_t value) {
     return lastStableValue;
 }
 
-void calculateEffectParams(int16_t steeringPosition){
+void calculateEffectParams(unsigned long currentMillis, int16_t steeringPosition){
   // set X Axis Spring Effect Param
   // joystickMin, joystickMax
   //map(value, realMinimum, realMaximum, actualMinimum, actualMaximum);
   params[0].springMaxPosition = joystickMax;
   params[0].springPosition = steeringPosition;
   
-  unsigned long currentMillis = millis();
   int16_t diffTime = currentMillis - lastEffectsUpdate;
   if(diffTime > 0){
     lastEffectsUpdate = currentMillis;
-    int16_t positionChangeX = (int16_t)((uint16_t)steeringPosition - (uint16_t)lastX);
+    int16_t positionChangeX = steeringPosition - lastX;
     int16_t velX = positionChangeX / diffTime;
     int16_t accelX = ((velX - lastVelX) * 5000) / diffTime;
 
@@ -1259,8 +1259,40 @@ void calculateEffectParams(int16_t steeringPosition){
   Joystick.setEffectParams(params);
 }
 
+void showSensors(){
+    const __FlashStringHelper* arrow = F(">");
+    oled.setRow(1); oled.setCol(0);
+    oled.setInvertMode(true);
+    oled.print(F("ffb"));
+    oled.setInvertMode(false);
+     oled.print(arrow);
+    oled.print(forces[0]);
+    oled.print(F("  "));
+    oled.setRow(1); oled.setCol(50);
+    oled.setInvertMode(true);
+    oled.print(F("x-axis")); 
+    oled.setInvertMode(false);
+    oled.print(arrow);
+    oled.print(steeringPosition);
+    oled.print(F("  "));
+    oled.setRow(2); oled.setCol(0);
+    oled.setInvertMode(true);
+    oled.print(F("btn")); 
+    oled.setInvertMode(false);
+    oled.print(arrow);
+    oled.print(F("                "));
+    oled.setCol(26);
+    for (i = 1; i <= 15; i++){
+      if(button[i]){
+        oled.print(i);
+        oled.print(F(" "));
+      }
+    }
+  
+}
+
 // SEND DATA TO JOYSTICK
-void ProcessDataAndApply()
+void ProcessDataAndApply(unsigned long currentMillis)
 {
   // STEERING
   //steeringPosition = mapLUT(steeringSensor);
@@ -1270,14 +1302,11 @@ void ProcessDataAndApply()
   Joystick.setXAxis(steeringPosition);
 
   // Update state/setEffectParams with steeringPosition
-  calculateEffectParams(steeringPosition);
+  calculateEffectParams(currentMillis, steeringPosition);
 
   // GET FORCE FEEDBACK
   Joystick.getForce(forces);
-  
-  oled.clear();
-  oled.print("force:");
-  oled.print(forces[0]);
+
   
   //                       damping
   //                         velocity

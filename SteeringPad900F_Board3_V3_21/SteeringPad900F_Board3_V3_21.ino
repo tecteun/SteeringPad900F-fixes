@@ -141,12 +141,25 @@ mmicro.build.extra_flags={build.usb_flags}
 #include <DigitalWriteFast.h>
 #include "ADS1X15.h"
 ADS1115 ADS(0x48);
-
+/* 27726
 // DISPLAY
 #include "SSD1306Ascii.h"
 #include "SSD1306AsciiAvrI2c.h"
 #define I2C_ADDRESS 0x3C
 SSD1306AsciiAvrI2c oled;
+*/
+ 
+// DISPLAY
+#include <AceWire.h>
+using ace_wire::TwoWireInterface;
+#include "SSD1306Ascii.h"
+#include "SSD1306AsciiAceWire.h"
+#define I2C_ADDRESS 0x3C
+
+using WireInterface = TwoWireInterface<TwoWire>;
+WireInterface wireInterface(Wire);
+
+SSD1306AsciiAceWire<WireInterface > oled(wireInterface);
 
 // JOYSTICK
 #include <Joystick.h>

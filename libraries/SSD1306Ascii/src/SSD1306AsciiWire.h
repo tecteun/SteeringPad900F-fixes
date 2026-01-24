@@ -29,7 +29,6 @@
 #ifndef SSD1306AsciiWire_h
 #define SSD1306AsciiWire_h
 #include <Wire.h>
-
 #include "SSD1306Ascii.h"
 /**
  * @class SSD1306AsciiWire
@@ -43,7 +42,7 @@ class SSD1306AsciiWire : public SSD1306Ascii {
    *
    * @param[in] bus The I2C bus to be used.
    */
-  explicit SSD1306AsciiWire(decltype(Wire)& bus = Wire) : m_oledWire(bus) {}
+  explicit SSD1306AsciiWire(decltype(Wire) &bus = Wire) : m_oledWire(bus) {}
 #else  // MULTIPLE_I2C_PORTS
 #define m_oledWire Wire
 #endif  // MULTIPLE_I2C_PORTS
@@ -97,12 +96,12 @@ class SSD1306AsciiWire : public SSD1306Ascii {
       m_oledWire.endTransmission();
       m_nData = 0;
     }
-#else   // OPTIMIZE_I2C
+#else  // OPTIMIZE_I2C
     m_oledWire.beginTransmission(m_i2cAddr);
-    m_oledWire.write(mode == SSD1306_MODE_CMD ? 0X00 : 0X40);
+    m_oledWire.write(mode == SSD1306_MODE_CMD ? 0X00: 0X40);
     m_oledWire.write(b);
     m_oledWire.endTransmission();
-#endif  // OPTIMIZE_I2C
+#endif    // OPTIMIZE_I2C
   }
 
  protected:

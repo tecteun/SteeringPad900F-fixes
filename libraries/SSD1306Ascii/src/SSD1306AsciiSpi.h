@@ -29,7 +29,6 @@
 #ifndef SSD1306AsciiSpi_h
 #define SSD1306AsciiSpi_h
 #include <SPI.h>
-
 #include "SSD1306Ascii.h"
 //------------------------------------------------------------------------------
 /**

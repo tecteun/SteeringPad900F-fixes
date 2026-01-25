@@ -138,32 +138,26 @@ mmicro.build.extra_flags={build.usb_flags}
 //  ██ ██   ████  ██████ ███████  ██████  ███████ ██  ██████  ██   ████ ███████ 
 
 // ADC
-#include <DigitalWriteFast.h>
-#include "ADS1X15.h"
-ADS1115 ADS(0x48);
-/* 27726
-// DISPLAY
-#include "SSD1306Ascii.h"
-#include "SSD1306AsciiAvrI2c.h"
-#define I2C_ADDRESS 0x3C
-SSD1306AsciiAvrI2c oled;
-*/
+const uint8_t SCL_PIN = SCL;
+const uint8_t SDA_PIN = SDA;
+const uint8_t DELAY_MICROS = 1;
 
+#include <AceWire.h>
+#include <DigitalWriteFast.h>
+#include <ace_wire/SimpleWireFastInterface.h>
+using ace_wire::SimpleWireFastInterface;
+
+using WireInterface = SimpleWireFastInterface<SDA_PIN, SCL_PIN, DELAY_MICROS>;
+WireInterface wireInterface;
+
+#include "ADS1X15.h"
+ADS1115<WireInterface> ADS(0x48, &wireInterface);
  
 // DISPLAY
-//#include <Wire.h> // TwoWire, Wire
-#include <AceWire.h>
-using ace_wire::TwoWireInterface;
 #include "SSD1306Ascii.h"
 #include "SSD1306AsciiAceWire.h"
 #define I2C_ADDRESS 0x3C
-
-using WireInterface = TwoWireInterface<TwoWire>;
-WireInterface wireInterface(Wire);
-
-SSD1306AsciiAceWire<WireInterface > oled(wireInterface);
-
- 
+SSD1306AsciiAceWire<WireInterface> oled(wireInterface);
 
 // JOYSTICK
 #include <Joystick.h>
@@ -987,7 +981,7 @@ void DisplayMainScreen()
   oled.setRow(0); oled.setCol(0);
   oled.print(F("STEERING PAD 900-F")); ////////////////////////////
   oled.setRow(3); oled.setCol(0);
-  oled.print(F("v3.22    hold ")); /////////////////////////////
+  oled.print(F("v3.23    hold ")); /////////////////////////////
   oled.setInvertMode(true);
   oled.print(F(" menu ")); /////////////////////////////
   oled.setInvertMode(false);

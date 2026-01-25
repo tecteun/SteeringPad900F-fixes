@@ -1,4 +1,6 @@
-Note: Version 1.2.x has several new examples and many changes/new features.
+Note: Has AceWire implementation, from https://github.com/bxparks/SSD1306Ascii/
+
+Note2: Version 1.2.x has several new examples and many changes/new features.
 
 SSD1306Ascii is an unbuffered character only library for small OLED
 displays like the Adafruit 1.3" and 0.96" Monochrome displays.

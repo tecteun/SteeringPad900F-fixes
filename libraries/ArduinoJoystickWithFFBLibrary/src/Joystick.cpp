@@ -525,31 +525,37 @@ int32_t Joystick_::getEffectForce(volatile TEffectState& effect, Gains _gains, E
 	switch (effect.effectType)
     {
 	    case USB_EFFECT_CONSTANT://1
-	        force = ConstantForceCalculator(effect) * _gains.constantGain;
+	        force = ConstantForceCalculator(effect) * _gains.constantGain * angle_ratio;
 	        break;
 	    case USB_EFFECT_RAMP://2
-	    	force = RampForceCalculator(effect) * _gains.rampGain;
+	    	force = RampForceCalculator(effect) * _gains.rampGain * angle_ratio;
 	    	break;
 	    case USB_EFFECT_SQUARE://3
-	    	force = SquareForceCalculator(effect) * _gains.squareGain;
+	    	force = SquareForceCalculator(effect) * _gains.squareGain * angle_ratio;
 	    	break;
 	    case USB_EFFECT_SINE://4
-	    	force = SinForceCalculator(effect) * _gains.sineGain;
+	    	force = SinForceCalculator(effect) * _gains.sineGain * angle_ratio;
 	    	break;
 	    case USB_EFFECT_TRIANGLE://5
-	    	force = TriangleForceCalculator(effect) * _gains.triangleGain;
+	    	force = TriangleForceCalculator(effect) * _gains.triangleGain * angle_ratio;
 	    	break;
 	    case USB_EFFECT_SAWTOOTHDOWN://6
-	    	force = SawtoothDownForceCalculator(effect) * _gains.sawtoothdownGain;
+	    	force = SawtoothDownForceCalculator(effect) * _gains.sawtoothdownGain * angle_ratio;
 	    	break;
 	    case USB_EFFECT_SAWTOOTHUP://7
-	    	force = SawtoothUpForceCalculator(effect) * _gains.sawtoothupGain;
+	    	force = SawtoothUpForceCalculator(effect) * _gains.sawtoothupGain * angle_ratio;
 	    	break;
 	    case USB_EFFECT_SPRING://8
 	    	force = ConditionForceCalculator(effect, NormalizeRange(_effect_params.springPosition, _effect_params.springMaxPosition), condition) * _gains.springGain;
+			if (useForceDirectionForConditionEffect) {
+				force *= angle_ratio;
+			}
 			break;
 	    case USB_EFFECT_DAMPER://9
 	    	force = ConditionForceCalculator(effect, NormalizeRange(_effect_params.damperVelocity, _effect_params.damperMaxVelocity), condition) * _gains.damperGain;
+			if (useForceDirectionForConditionEffect) {
+				force *= angle_ratio;
+			}
 			break;
 	    case USB_EFFECT_INERTIA://10
 	    	if (_effect_params.inertiaAcceleration < 0 && _effect_params.frictionPositionChange < 0) {
@@ -558,16 +564,19 @@ int32_t Joystick_::getEffectForce(volatile TEffectState& effect, Gains _gains, E
 	    	else if (_effect_params.inertiaAcceleration < 0 && _effect_params.frictionPositionChange > 0) {
 	    		force = -1 * ConditionForceCalculator(effect, abs(NormalizeRange(_effect_params.inertiaAcceleration, _effect_params.inertiaMaxAcceleration)), condition) * _gains.inertiaGain;
 	    	}
+			if (useForceDirectionForConditionEffect) {
+				force *= angle_ratio;
+			}
 	    	break;
 	    case USB_EFFECT_FRICTION://11
-	    		force = ConditionForceCalculator(effect, NormalizeRange(_effect_params.frictionPositionChange, _effect_params.frictionMaxPositionChange), condition) * _gains.frictionGain;
+	    	force = ConditionForceCalculator(effect, NormalizeRange(_effect_params.frictionPositionChange, _effect_params.frictionMaxPositionChange), condition) * _gains.frictionGain;
+			if (useForceDirectionForConditionEffect) {
+				force *= angle_ratio;
+			}
 				break;
 	    case USB_EFFECT_CUSTOM://12
 	    		break;
 	    }
-		if (useForceDirectionForConditionEffect) {
-			force *= angle_ratio;
-		}
 	    effect.elapsedTime = (uint64_t)millis() - effect.startTime;
 		return force;
 }

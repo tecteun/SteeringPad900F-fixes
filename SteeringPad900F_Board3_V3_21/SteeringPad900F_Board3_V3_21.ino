@@ -165,7 +165,7 @@ SSD1306AsciiAceWire<WireInterface> oled(wireInterface);
 Joystick_ Joystick(
   JOYSTICK_DEFAULT_REPORT_ID,
   JOYSTICK_TYPE_JOYSTICK,
-  15,     // Buttons (Max 32)
+  17,     // Buttons (Max 32)
   0,      // Hats (Max 2)
   true,   // X Axis
   true,   // Y Axis
@@ -312,10 +312,10 @@ byte menuLength = 7;
 int sensorValues[4];
 bool buttonsMux[15] = {false};
 
-bool button[16];
+bool button[18];
 bool buttonMenu;
 
-bool oldButton[16];
+bool oldButton[18];
 bool oldButtonMenu;
 
 bool button3WasPressed;
@@ -981,7 +981,7 @@ void DisplayMainScreen()
   oled.setRow(0); oled.setCol(0);
   oled.print(F("STEERING PAD 900-F")); ////////////////////////////
   oled.setRow(3); oled.setCol(0);
-  oled.print(F("v3.23    hold ")); /////////////////////////////
+  oled.print(F("v3.24    hold ")); /////////////////////////////
   oled.setInvertMode(true);
   oled.print(F(" menu ")); /////////////////////////////
   oled.setInvertMode(false);
@@ -1071,7 +1071,7 @@ void ReadButtons(unsigned long currentMillis)
   CheckButton3Press(currentMillis);
   button[4] = buttonsMux[6];
   button[5] = buttonsMux[10];
-  button[6] = buttonsMux[11];
+  if (!button13OnHold) button[6] = buttonsMux[11];
   button[7] = buttonsMux[7];
   button[8] = buttonsMux[8];
   if (!button13OnHold) button[9] = buttonsMux[3];
@@ -1081,7 +1081,7 @@ void ReadButtons(unsigned long currentMillis)
   CheckButton13press();
   if (button13OnHold)
   {
-    if(buttonsMux[3] || buttonsMux[5])
+    if(buttonsMux[3] || buttonsMux[5] || buttonsMux[9] || buttonsMux[11])
     {
       if(!button13AsFunction) button13AsFunction = true;
     }
@@ -1091,13 +1091,14 @@ void ReadButtons(unsigned long currentMillis)
   {
     button[14] = buttonsMux[3];
     button[15] = buttonsMux[5];
+    button[16] = buttonsMux[11];
   }
 }
 
 
 void UpdateOldButtons()
 {
-  for (i = 1; i < 16; i++){
+  for (i = 1; i <= 17; i++){
     oldButton[i] = button[i];
   }
   oldButtonMenu = buttonMenu;
@@ -1112,6 +1113,7 @@ void CheckButton13press()
     if (!button13OnHold)
     {
       button13OnHold = true;
+      button[6] = false;
       button[9] = false;
       button[11] = false;
     }
@@ -1121,6 +1123,7 @@ void CheckButton13press()
     button13OnHold = false;
     button[14] = false;
     button[15] = false;
+    button[16] = false;
     if (!button13AsFunction) button[13] = true;
     button13AsFunction = false;
   }
@@ -1131,6 +1134,7 @@ void CheckButton3Press(unsigned long currentMillis)
 {
   if (!buttonsMux[9])
   {
+    if (oldButton[17]) button[17] = false;
     if (oldButton[3]) button[3] = false;
     if (oldButtonMenu) buttonMenu = false;
   }
@@ -1161,7 +1165,11 @@ void CheckButton3Press(unsigned long currentMillis)
       // Detecta a transição: o botão foi solto
       if (!longPressTriggered)
       {
-        button[3] = true;
+        if(button13OnHold){
+          button[17] = true;
+        }else{
+          button[3] = true;
+        }
       }
       // Reinicia os estados para a próxima detecção
       button3WasPressed = false;
@@ -1278,7 +1286,7 @@ void showSensors(){
     oled.print(arrow);
     oled.print(F("                "));
     oled.setCol(26);
-    for (i = 1; i <= 15; i++){
+    for (i = 1; i <= 17; i++){
       if(button[i]){
         oled.print(i);
         oled.print(F(" "));
@@ -1374,11 +1382,11 @@ void ProcessDataAndApply(unsigned long currentMillis)
   }
 
   // BUTTONS
-  for (i = 1; i <= 15; i++){
+  for (i = 1; i <= 17; i++){
      if (button[i] && !oldButton[i]) Joystick.pressButton(i-1);
   }
 
-  for (i = 1; i <= 15; i++){
+  for (i = 1; i <= 17; i++){
     if (!button[i] && oldButton[i]) Joystick.releaseButton(i-1);
   }
 }

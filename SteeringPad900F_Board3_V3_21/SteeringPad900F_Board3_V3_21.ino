@@ -987,7 +987,7 @@ void DisplayMainScreen()
   oled.setRow(0); oled.setCol(0);
   oled.print(F("STEERING PAD 900-F")); ////////////////////////////
   oled.setRow(3); oled.setCol(0);
-  oled.print(F("v3.21    hold ")); /////////////////////////////
+  oled.print(F("v3.22    hold ")); /////////////////////////////
   oled.setInvertMode(true);
   oled.print(F(" menu ")); /////////////////////////////
   oled.setInvertMode(false);

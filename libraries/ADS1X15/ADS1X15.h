@@ -10,7 +10,7 @@
 
 
 #include "Arduino.h"
-#include "Wire.h"
+#include "AceWire.h"
 
 #define ADS1X15_LIB_VERSION               (F("0.5.3"))
 

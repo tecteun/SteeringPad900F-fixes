@@ -521,6 +521,12 @@ int32_t Joystick_::getEffectForce(volatile TEffectState& effect, Gains _gains, E
 
     float angle = (direction * 360.0 / 255.0) * DEG_TO_RAD;
     float angle_ratio = axis == 0 ? sin(angle) : -1 * cos(angle);
+	
+	// patched this for use with wheel device, if angle is 0, ie. pointing upward, redirect the angle sideways, because we want to notice the effect.
+	if(angle_ratio == 0){
+		angle_ratio = 1;
+	}
+	
 	int32_t force = 0;
 	switch (effect.effectType)
     {

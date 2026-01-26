@@ -352,6 +352,8 @@ byte steeringCalibrationStep = 0;
 int i;
 int iBlock;
 
+unsigned long screenUpdate = 0;
+
 //  ███████ ███████ ████████ ██    ██ ██████  
 //  ██      ██         ██    ██    ██ ██   ██ 
 //  ███████ █████      ██    ██    ██ ██████  
@@ -461,7 +463,10 @@ void loop() {
       oled.clear();
       menuLevel = lastMenuLevel; // Set MENU to first setting
     }
-    showSensors(diffTime);
+    if(currentMillis - screenUpdate > 50){
+      screenUpdate = currentMillis;
+      showSensors(diffTime);
+    }
   }
 
   if (operationMode == 1) MenuOperations();  // IN MENU MODE
@@ -1275,7 +1280,7 @@ void showSensors(int16_t diffTime){
      oled.print(arrow);
     oled.print(forces[0]);
     oled.print(F("  "));
-    /*
+    
     oled.setRow(1); oled.setCol(50);
     oled.setInvertMode(true);
     oled.print(F("x-axis")); 
@@ -1296,7 +1301,7 @@ void showSensors(int16_t diffTime){
         oled.print(F(" "));
       }
     }
-    */
+    
     oled.setRow(2);
     oled.setCol(60);
     oled.print(1000/diffTime);

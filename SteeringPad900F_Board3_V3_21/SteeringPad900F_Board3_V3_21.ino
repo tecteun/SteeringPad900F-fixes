@@ -987,7 +987,7 @@ void DisplayMainScreen()
   oled.setRow(0); oled.setCol(0);
   oled.print(F("STEERING PAD 900-F")); ////////////////////////////
   oled.setRow(3); oled.setCol(0);
-  oled.print(F("v3.24    hold ")); /////////////////////////////
+  oled.print(F("         hold ")); /////////////////////////////
   oled.setInvertMode(true);
   oled.print(F(" menu ")); /////////////////////////////
   oled.setInvertMode(false);
@@ -1301,11 +1301,13 @@ void showSensors(int16_t diffTime){
         oled.print(F(" "));
       }
     }
-    
-    oled.setRow(2);
-    oled.setCol(60);
+    oled.setRow(3); oled.setCol(0);
+    oled.setInvertMode(true);
+    oled.print(F("Hz")); 
+    oled.setInvertMode(false);
+    oled.print(arrow);
     oled.print(1000/diffTime);
-    oled.print("    ");
+    oled.print(F("  "));
   
 }
 

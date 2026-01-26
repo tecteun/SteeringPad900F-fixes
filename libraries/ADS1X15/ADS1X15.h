@@ -188,6 +188,8 @@ public:
   //    not necessary the actual value as it can be overwritten
   //    by other code.
   uint32_t getWireClock();
+  
+  void     setConversionDelay(uint8_t delay);
 
   //  EXPERIMENTAL
   //  see https://github.com/RobTillaart/ADS1X15/issues/91
@@ -767,6 +769,12 @@ uint32_t ADS1X15<T_WIREI>::getWireClock()
 #else  //  best effort is remembering it
   return _clockSpeed;
 #endif
+}
+
+template<typename T_WIREI>
+void ADS1X15<T_WIREI>::setConversionDelay(uint8_t delay)
+{
+	this->_conversionDelay = delay;
 }
 
 

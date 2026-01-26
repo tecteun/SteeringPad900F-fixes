@@ -378,6 +378,7 @@ void setup()
   ADS.setMode(0);      // 0:continuous 1:single
   ADS.setGain(1);      // 0:6.144V  1:4.096V 2:2.048V 4:1.024V 8:0.512V 16:0.256V
   ADS.setDataRate(7);  // 0:slowest 4:default 7:fastest
+  ADS.setConversionDelay(1); // 1ms (default: 8)
   ADS.begin();
 
   // START DISPLAY ///////////////////////////////////////////////
@@ -454,13 +455,13 @@ void loop() {
   {
     processAccelleratorPedal();
     processBreakPedal();
-    ProcessDataAndApply(currentMillis);
+    int16_t diffTime = ProcessDataAndApply(currentMillis);
     if (buttonMenu) {
       operationMode = 1;  // Enable MENU
       oled.clear();
       menuLevel = lastMenuLevel; // Set MENU to first setting
     }
-    showSensors();
+    showSensors(diffTime);
   }
 
   if (operationMode == 1) MenuOperations();  // IN MENU MODE
@@ -1037,9 +1038,9 @@ void DisplayConfirmationScreen()
 //
 void ReadAnalogSensors()
 {
-  steeringSensor = ADS.readADC(0);
-  brakeSensor = ADS.readADC(1);
-  acceleratorSensor = ADS.readADC(2);
+  steeringSensor = ADS.readADC(1);
+  brakeSensor = ADS.readADC(2);
+  acceleratorSensor = ADS.readADC(0);
 }
 
 void ReadButtons(unsigned long currentMillis)
@@ -1236,7 +1237,7 @@ int16_t applyDeadband(int16_t value) {
     return lastStableValue;
 }
 
-void calculateEffectParams(unsigned long currentMillis, int16_t steeringPosition){
+int16_t calculateEffectParams(unsigned long currentMillis, int16_t steeringPosition){
   // set X Axis Spring Effect Param
   // joystickMin, joystickMax
   //map(value, realMinimum, realMaximum, actualMinimum, actualMaximum);
@@ -1261,9 +1262,11 @@ void calculateEffectParams(unsigned long currentMillis, int16_t steeringPosition
   params[0].inertiaMaxAcceleration = 250;
   params[0].frictionMaxPositionChange = 20;
   Joystick.setEffectParams(params);
+  return diffTime;
 }
 
-void showSensors(){
+void showSensors(int16_t diffTime){
+  
     const __FlashStringHelper* arrow = F(">");
     oled.setRow(1); oled.setCol(0);
     oled.setInvertMode(true);
@@ -1272,6 +1275,7 @@ void showSensors(){
      oled.print(arrow);
     oled.print(forces[0]);
     oled.print(F("  "));
+    /*
     oled.setRow(1); oled.setCol(50);
     oled.setInvertMode(true);
     oled.print(F("x-axis")); 
@@ -1292,6 +1296,11 @@ void showSensors(){
         oled.print(F(" "));
       }
     }
+    */
+    oled.setRow(2);
+    oled.setCol(60);
+    oled.print(1000/diffTime);
+    oled.print("    ");
   
 }
 
@@ -1341,7 +1350,7 @@ void processAccelleratorPedal(){
 }
 
 // SEND DATA TO JOYSTICK
-void ProcessDataAndApply(unsigned long currentMillis)
+int16_t ProcessDataAndApply(unsigned long currentMillis)
 {
   // STEERING
   //steeringPosition = mapLUT(steeringSensor);
@@ -1351,7 +1360,7 @@ void ProcessDataAndApply(unsigned long currentMillis)
   Joystick.setXAxis(steeringPosition);
 
   // Update state/setEffectParams with steeringPosition
-  calculateEffectParams(currentMillis, steeringPosition);
+  int16_t diffTime = calculateEffectParams(currentMillis, steeringPosition);
 
   // GET FORCE FEEDBACK
   Joystick.getForce(forces);
@@ -1389,6 +1398,8 @@ void ProcessDataAndApply(unsigned long currentMillis)
   for (i = 1; i <= 17; i++){
     if (!button[i] && oldButton[i]) Joystick.releaseButton(i-1);
   }
+
+  return diffTime;
 }
 
 // RETURN LUT CALCULATED VALUE

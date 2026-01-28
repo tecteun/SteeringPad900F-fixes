@@ -515,7 +515,15 @@ void loop() {
     #endif
   }
 
-  if (operationMode == 1) MenuOperations();  // IN MENU MODE
+  if (operationMode == 1){
+    #if ADS_INTERRUPT_PIN_0_ENABLED
+    adsPause = true;
+    #endif
+    MenuOperations();  // IN MENU MODE
+    #if ADS_INTERRUPT_PIN_0_ENABLED
+    adsPause = false;
+    #endif
+  }
 
   UpdateOldButtons();
   oldOperationMode = operationMode;

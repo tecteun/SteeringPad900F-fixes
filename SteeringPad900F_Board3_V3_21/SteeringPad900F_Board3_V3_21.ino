@@ -490,6 +490,7 @@ void loop() {
   // IN GAME MODE
   if (operationMode == 0)  
   {
+    //next part is too processor intensive, stop reading samples to avoid shitting itself
     adsPause = true;
     processAccelleratorPedal();
     processBreakPedal();
@@ -1092,9 +1093,9 @@ void DisplayConfirmationScreen()
 void ReadAnalogSensors()
 {
   #if ADS_INTERRUPT_PIN_0_ENABLED
-  steeringSensor = adsValues[1];
-  brakeSensor = adsValues[2];
-  acceleratorSensor = adsValues[0];
+  steeringSensor = adsValues[0];
+  brakeSensor = adsValues[1];
+  acceleratorSensor = adsValues[2];
   #else
   steeringSensor = ADS.readADC(1);
   brakeSensor = ADS.readADC(2);

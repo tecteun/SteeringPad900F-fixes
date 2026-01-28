@@ -245,15 +245,18 @@ bool forceActive = true;
 // OPTIONAL INTERRUPT HANDLING ON ALERT/RDY PIN
 volatile bool adsPause = false; // option to pause conversions when doing heavy stuff
 #if ADS_INTERRUPT_PIN_0_ENABLED
-
 volatile int16_t adsValues[4] = { 0, 0, 0, 0 };
+// try sampling at 820SPS
 void adsReady()
 {
   if(!adsPause){
     byte lastRequest = ADS.lastRequest();
     adsValues[lastRequest] = ADS.getValue();
-    lastRequest++;
-    ADS.requestADC(lastRequest > 2 ? 0 : lastRequest);
+    lastRequest++; //prepare to sample next channel
+    if(lastRequest > 2){ 
+      lastRequest = 0;
+    }
+    ADS.requestADC(lastRequest);
   }
 }
 #endif
@@ -381,7 +384,7 @@ unsigned long screenUpdate = 0;
 //
 void setup()
 {
-  //Serial.begin(9600);
+  //Serial.begin(230400);
   #if isFirstTimeUploading
     StoreData(); //This will reset all calibrations - See FEATURES section above!
   #endif
@@ -466,7 +469,7 @@ void setup()
   delay(100);
 
   #if ADS_INTERRUPT_PIN_0_ENABLED
-  ADS.requestADC(0);   //  start the interrupts
+  ADS.requestADC(0);   //  start the interrupts, sample channel 0
   #endif
 }
 
@@ -490,8 +493,10 @@ void loop() {
   // IN GAME MODE
   if (operationMode == 0)  
   {
+    #if ADS_INTERRUPT_PIN_0_ENABLED
     //next part is too processor intensive, stop reading samples to avoid shitting itself
     adsPause = true;
+    #endif
     processAccelleratorPedal();
     processBreakPedal();
     int16_t diffTime = ProcessDataAndApply(currentMillis);
@@ -504,7 +509,10 @@ void loop() {
       screenUpdate = currentMillis;
       showSensors(diffTime);
     }
+    
+    #if ADS_INTERRUPT_PIN_0_ENABLED
     adsPause = false;
+    #endif
   }
 
   if (operationMode == 1) MenuOperations();  // IN MENU MODE
@@ -1096,6 +1104,8 @@ void ReadAnalogSensors()
   steeringSensor = adsValues[0];
   brakeSensor = adsValues[1];
   acceleratorSensor = adsValues[2];
+  //Serial.println(steeringSensor);
+
   #else
   steeringSensor = ADS.readADC(1);
   brakeSensor = ADS.readADC(2);
@@ -1288,13 +1298,21 @@ float sqrt_approx(float x)
 int16_t lastStableValue = 0;
 int16_t lastX = 0;
 int16_t lastVelX = 0;
-int16_t lastAccelX = 0;
 unsigned long lastEffectsUpdate = 0;
 
 int16_t applyDeadband(int16_t value) {
     if ((value > lastStableValue ? value - lastStableValue : lastStableValue - value) > 10)
       lastStableValue = value;
     return lastStableValue;
+}
+
+int16_t smoothSignal(int16_t raw) { 
+  static int32_t filtered = 0; 
+  if(filtered == 0){
+    filtered = raw;
+  }
+   filtered += raw; 
+   return (int16_t)filtered/2; 
 }
 
 int16_t calculateEffectParams(unsigned long currentMillis, int16_t steeringPosition){
@@ -1309,13 +1327,12 @@ int16_t calculateEffectParams(unsigned long currentMillis, int16_t steeringPosit
     lastEffectsUpdate = currentMillis;
     int16_t positionChangeX = steeringPosition - lastX;
     int16_t velX = positionChangeX / diffTime;
-    int16_t accelX = ((velX - lastVelX) * 5000) / diffTime;
+    int16_t accelX = ((velX - lastVelX) * 50) / diffTime; //todo
 
     params[0].frictionPositionChange = -velX;
-    params[0].inertiaAcceleration = -(accelX+lastAccelX)/2;
+    params[0].inertiaAcceleration = -accelX;
     params[0].damperVelocity = -velX;
     lastVelX = velX;
-    lastAccelX = accelX;
     lastX = steeringPosition;   
   }
   params[0].damperMaxVelocity = 20;
@@ -1416,7 +1433,7 @@ int16_t ProcessDataAndApply(unsigned long currentMillis)
 {
   // STEERING
   //steeringPosition = mapLUT(steeringSensor);
-  steeringPosition = mapLUT(applyDeadband(steeringSensor));
+  steeringPosition = mapLUT(applyDeadband(steeringSensor)); // maybe just smooth here?
   
   // Apply position
   Joystick.setXAxis(steeringPosition);

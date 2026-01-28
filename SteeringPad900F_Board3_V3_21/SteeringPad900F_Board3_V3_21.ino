@@ -484,9 +484,7 @@ void loop() {
   // 1 - In Menu
   // 2 - In Confirmation
   unsigned long currentMillis = millis();
-  adsPause = true;
   ReadButtons(currentMillis);
-  adsPause = false;
   ReadAnalogSensors();
 
   // IN GAME MODE

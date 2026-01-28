@@ -152,7 +152,10 @@ WireInterface wireInterface;
 
 #include "ADS1X15.h"
 ADS1115<WireInterface> ADS(0x48, &wireInterface);
- 
+
+// ALERT/RDY pin connected to PIN0 of the pro micro?
+#define ADS_INTERRUPT_PIN_0_ENABLED false
+
 // DISPLAY
 #include "SSD1306Ascii.h"
 #include "SSD1306AsciiAceWire.h"
@@ -238,6 +241,22 @@ int16_t acceleratorSensorMax = 14718;
 // FORCE FEEDBACK
 int forceGain = 100;
 bool forceActive = true;
+
+// OPTIONAL INTERRUPT HANDLING ON ALERT/RDY PIN
+volatile bool adsPause = false; // option to pause conversions when doing heavy stuff
+#if ADS_INTERRUPT_PIN_0_ENABLED
+
+volatile int16_t adsValues[4] = { 0, 0, 0, 0 };
+void adsReady()
+{
+  if(!adsPause){
+    byte lastRequest = ADS.lastRequest();
+    adsValues[lastRequest] = ADS.getValue();
+    lastRequest++;
+    ADS.requestADC(lastRequest > 2 ? 0 : lastRequest);
+  }
+}
+#endif
 
 
 //   ██████  ██████  ███    ██ ███████ ████████  █████  ███    ██ ████████ 
@@ -377,12 +396,24 @@ void setup()
   pinMode(7, INPUT_PULLUP);
 
   // START ADC ///////////////////////////////////////////////////
+  ADS.begin();
   ADS.setMode(0);      // 0:continuous 1:single
   ADS.setGain(1);      // 0:6.144V  1:4.096V 2:2.048V 4:1.024V 8:0.512V 16:0.256V
   ADS.setDataRate(7);  // 0:slowest 4:default 7:fastest
-  ADS.setConversionDelay(1); // 1ms (default: 8)
-  ADS.begin();
 
+  #if ADS_INTERRUPT_PIN_0_ENABLED
+  //  SET ALERT RDY PIN
+  ADS.setComparatorThresholdHigh(0x8000);
+  ADS.setComparatorThresholdLow(0x0000);
+  ADS.setComparatorQueConvert(ADS1x15_COMP_QUE_CONV_TRIGGER_1);
+
+  //  SET INTERRUPT HANDLER TO CATCH CONVERSION READY
+  pinMode(0, INPUT_PULLUP);
+  attachInterrupt(digitalPinToInterrupt(0), adsReady, RISING);
+  #else
+  ADS.setConversionDelay(1); // 1ms (default: 8)
+  #endif
+  
   // START DISPLAY ///////////////////////////////////////////////
   oled.begin(&Adafruit128x32, I2C_ADDRESS);
   oled.setFont(Stang5x7);
@@ -433,6 +464,10 @@ void setup()
   operationMode = 0;
 
   delay(100);
+
+  #if ADS_INTERRUPT_PIN_0_ENABLED
+  ADS.requestADC(0);   //  start the interrupts
+  #endif
 }
 
 
@@ -449,12 +484,15 @@ void loop() {
   // 1 - In Menu
   // 2 - In Confirmation
   unsigned long currentMillis = millis();
+  adsPause = true;
   ReadButtons(currentMillis);
+  adsPause = false;
   ReadAnalogSensors();
 
   // IN GAME MODE
   if (operationMode == 0)  
   {
+    adsPause = true;
     processAccelleratorPedal();
     processBreakPedal();
     int16_t diffTime = ProcessDataAndApply(currentMillis);
@@ -467,6 +505,7 @@ void loop() {
       screenUpdate = currentMillis;
       showSensors(diffTime);
     }
+    adsPause = false;
   }
 
   if (operationMode == 1) MenuOperations();  // IN MENU MODE
@@ -474,6 +513,16 @@ void loop() {
   UpdateOldButtons();
   oldOperationMode = operationMode;
 
+  /*
+  adsPause = true;
+  for (int i = 0; i < 4; i++)
+  {  
+    Serial.print('\t');
+    Serial.print(adsValues[i]);
+  }
+  Serial.println();
+  adsPause = false;
+  */
 }
 
 
@@ -1041,11 +1090,18 @@ void DisplayConfirmationScreen()
 //  ██ ██  ██ ██ ██      ██    ██    ██    
 //  ██ ██   ████ ██       ██████     ██    
 //
+
 void ReadAnalogSensors()
 {
+  #if ADS_INTERRUPT_PIN_0_ENABLED
+  steeringSensor = adsValues[1];
+  brakeSensor = adsValues[2];
+  acceleratorSensor = adsValues[0];
+  #else
   steeringSensor = ADS.readADC(1);
   brakeSensor = ADS.readADC(2);
   acceleratorSensor = ADS.readADC(0);
+  #endif
 }
 
 void ReadButtons(unsigned long currentMillis)

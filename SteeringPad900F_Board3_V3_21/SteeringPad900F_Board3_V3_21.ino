@@ -385,6 +385,13 @@ unsigned long screenUpdate = 0;
 void setup()
 {
   //Serial.begin(230400);
+
+  #if ADS_INTERRUPT_PIN_0_ENABLED
+  // disable interrupt during setup if previously enabled, prevent interference
+  ADS.setComparatorQueConvert(ADS1x15_COMP_QUE_CONV_DISABLE);
+  ADS.requestADC(0);
+  #endif
+
   #if isFirstTimeUploading
     StoreData(); //This will reset all calibrations - See FEATURES section above!
   #endif

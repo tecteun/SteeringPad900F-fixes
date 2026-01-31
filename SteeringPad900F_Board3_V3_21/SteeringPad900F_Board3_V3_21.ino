@@ -504,6 +504,7 @@ void loop() {
   if(!sampleReady){
     return;
   }
+  sampleReady = false;
   #endif
   
 
@@ -1337,32 +1338,41 @@ int16_t smoothSignal(int16_t raw) {
    filtered += raw; 
    return (int16_t)filtered/2; 
 }
+int16_t posBuf[5];
+uint8_t pIdx = 0;
 
-int16_t calculateEffectParams(unsigned long currentMillis, int16_t steeringPosition){
-  // set X Axis Spring Effect Param
-  // joystickMin, joystickMax
-  //map(value, realMinimum, realMaximum, actualMinimum, actualMaximum);
+int16_t calculateEffectParams(unsigned long now, int16_t pos){
   params[0].springMaxPosition = joystickMax;
-  params[0].springPosition = -steeringPosition;
-  
-  int16_t diffTime = currentMillis - lastEffectsUpdate;
-  if(diffTime > 0){
-    lastEffectsUpdate = currentMillis;
-    int16_t positionChangeX = steeringPosition - lastX;
-    int16_t velX = positionChangeX / diffTime;
-    int16_t accelX = ((velX - lastVelX) * 50) / diffTime; //todo
+  params[0].springPosition = -pos;
 
-    params[0].frictionPositionChange = -velX;
-    params[0].inertiaAcceleration = -accelX;
-    params[0].damperVelocity = -velX;
-    lastVelX = velX;
-    lastX = steeringPosition;   
+  int16_t dt = now - lastEffectsUpdate;
+  if(dt > 12){
+    lastEffectsUpdate = now;
+
+    // buffer + rolling sum
+    static int16_t sum = 0;
+    sum -= posBuf[pIdx];
+    int16_t d = (pos - lastX)*2;
+    posBuf[pIdx] = d;
+    sum += d;
+    pIdx = (pIdx + 1) % 5;
+
+    int16_t avg = sum / 5;
+    int16_t vel = avg / dt;
+    int16_t acc = ((vel - lastVelX) * 50) / dt;
+    params[0].frictionPositionChange = -vel;
+    params[0].inertiaAcceleration = -acc;
+    params[0].damperVelocity = -vel;
+
+    lastVelX = vel;
+    lastX = pos;
   }
-  params[0].damperMaxVelocity = 20;
-  params[0].inertiaMaxAcceleration = 250;
-  params[0].frictionMaxPositionChange = 20;
+
+  params[0].damperMaxVelocity = 50;
+  params[0].inertiaMaxAcceleration = 75;
+  params[0].frictionMaxPositionChange = 50;
   Joystick.setEffectParams(params);
-  return diffTime;
+  return dt;
 }
 
 void showSensors(int16_t diffTime, int16_t steeringPosition){
@@ -1462,7 +1472,7 @@ int16_t ProcessDataAndApply(unsigned long currentMillis)
   Joystick.setXAxis(steeringPosition);
 
   // Update state/setEffectParams with steeringPosition
-  int16_t diffTime = calculateEffectParams(currentMillis, steeringPosition);
+  int16_t diffTime = calculateEffectParams(currentMillis, mapLUT(steeringSensor));
 
   // GET FORCE FEEDBACK
   Joystick.getForce(forces);

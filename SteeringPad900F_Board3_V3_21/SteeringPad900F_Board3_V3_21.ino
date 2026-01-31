@@ -67,13 +67,16 @@ mmicro.build.mcu=atmega32u4
 mmicro.build.f_cpu=16000000L
 mmicro.build.vid=0x046d
 mmicro.build.pid=0x0000
+#mmicro.build.pid=0xC29B
 mmicro.build.usb_product="Steering Pad 900-F"
 mmicro.build.usb_manufacturer="Logitech, Inc"
 mmicro.build.board=AVR_MICRO
 mmicro.build.core=arduino
 mmicro.build.variant=micro
 mmicro.build.extra_flags={build.usb_flags}
-
+#to make the controller work with certain games, add this line 
+#(it will make the device not show up as composite device (HID+CDC) but not very handy while debugging the code)
+#mmicro.build.extra_flags=-DCDC_DISABLED {build.usb_flags}
 
 ##############################################################
  

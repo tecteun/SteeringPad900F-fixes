@@ -154,7 +154,7 @@ WireInterface wireInterface;
 ADS1115<WireInterface> ADS(0x48, &wireInterface);
 
 // ALERT/RDY pin connected to PIN0 of the pro micro?
-#define ADS_INTERRUPT_PIN_0_ENABLED false
+#define ADS_INTERRUPT_PIN_0_ENABLED true
 
 // DISPLAY
 #include "SSD1306Ascii.h"
@@ -244,20 +244,14 @@ bool forceActive = true;
 
 // OPTIONAL INTERRUPT HANDLING ON ALERT/RDY PIN
 volatile bool adsPause = false; // option to pause conversions when doing heavy stuff
+volatile bool RDY = false; // option to pause conversions when doing heavy stuff
+
 #if ADS_INTERRUPT_PIN_0_ENABLED
 volatile int16_t adsValues[4] = { 0, 0, 0, 0 };
 // try sampling at 820SPS
 void adsReady()
 {
-  if(!adsPause){
-    byte lastRequest = ADS.lastRequest();
-    adsValues[lastRequest] = ADS.getValue();
-    lastRequest++; //prepare to sample next channel
-    if(lastRequest > 2){ 
-      lastRequest = 0;
-    }
-    ADS.requestADC(lastRequest);
-  }
+RDY = true;
 }
 #endif
 
@@ -384,6 +378,8 @@ unsigned long screenUpdate = 0;
 //
 void setup()
 {
+  UDIEN &= ~(1 << SOFE);   // Disable USB Start-of-Frame interrupt
+
   //Serial.begin(230400);
 
   #if ADS_INTERRUPT_PIN_0_ENABLED
@@ -487,7 +483,29 @@ void setup()
 //  ██      ██    ██ ██    ██ ██      
 //  ███████  ██████   ██████  ██      
 //
+bool sampleReady = false;
 void loop() {
+  #if ADS_INTERRUPT_PIN_0_ENABLED
+  if(!RDY){
+    return;
+  }
+  if(RDY && !sampleReady){
+    byte lastRequest = ADS.lastRequest();
+    adsValues[lastRequest] = ADS.getValue();
+    lastRequest++; //prepare to sample next channel
+    if(lastRequest > 2){ 
+      lastRequest = 0;
+      sampleReady = true;
+    }
+    ADS.requestADC(lastRequest);
+    delayMicroseconds(1000);
+    RDY = false;
+  }
+  if(!sampleReady){
+    return;
+  }
+  #endif
+  
 
   // OPERATION MODES
   // 0 - In Game
@@ -496,14 +514,9 @@ void loop() {
   unsigned long currentMillis = millis();
   ReadButtons(currentMillis);
   ReadAnalogSensors();
-
   // IN GAME MODE
   if (operationMode == 0)  
   {
-    #if ADS_INTERRUPT_PIN_0_ENABLED
-    //next part is too processor intensive, stop reading samples to avoid shitting itself
-    adsPause = true;
-    #endif
     processAccelleratorPedal();
     processBreakPedal();
     int16_t diffTime = ProcessDataAndApply(currentMillis);
@@ -514,22 +527,13 @@ void loop() {
     }
     if(currentMillis - screenUpdate > 50){
       screenUpdate = currentMillis;
+      Serial.println(steeringPosition);
       showSensors(diffTime);
     }
-    
-    #if ADS_INTERRUPT_PIN_0_ENABLED
-    adsPause = false;
-    #endif
   }
 
   if (operationMode == 1){
-    #if ADS_INTERRUPT_PIN_0_ENABLED
-    adsPause = true;
-    #endif
     MenuOperations();  // IN MENU MODE
-    #if ADS_INTERRUPT_PIN_0_ENABLED
-    adsPause = false;
-    #endif
   }
 
   UpdateOldButtons();
@@ -545,6 +549,11 @@ void loop() {
   Serial.println();
   adsPause = false;
   */
+  #if ADS_INTERRUPT_PIN_0_ENABLED
+  RDY = false;
+  sampleReady = false;
+  ADS.requestADC(0);
+  #endif
 }
 
 

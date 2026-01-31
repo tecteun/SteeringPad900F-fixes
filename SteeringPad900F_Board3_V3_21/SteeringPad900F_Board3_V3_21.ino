@@ -1319,12 +1319,8 @@ float sqrt_approx(float x)
 
 
 // --- FILTERING ---
-int16_t lastStableValue = 0;
-int16_t lastX = 0;
-int16_t lastVelX = 0;
-unsigned long lastEffectsUpdate = 0;
-
 int16_t applyDeadband(int16_t value) {
+    static int16_t lastStableValue = 0;
     if ((value > lastStableValue ? value - lastStableValue : lastStableValue - value) > 10)
       lastStableValue = value;
     return lastStableValue;
@@ -1338,39 +1334,86 @@ int16_t smoothSignal(int16_t raw) {
    filtered += raw; 
    return (int16_t)filtered/2; 
 }
-int16_t posBuf[5];
+#define BUFLEN 4
+int16_t posBuf[BUFLEN];
+int16_t dtBuf[BUFLEN];
 uint8_t pIdx = 0;
 
 int16_t calculateEffectParams(unsigned long now, int16_t pos){
+  static unsigned long lastEffectsUpdate = 0;
+  static int16_t lastX = 0;
+  static int16_t sum = 0;
+  static int16_t sumdt = 0;
+  static int16_t lastAvg = 0;
+  
   params[0].springMaxPosition = joystickMax;
   params[0].springPosition = -pos;
 
   int16_t dt = now - lastEffectsUpdate;
-  if(dt > 12){
+  if(dt > 0){
+    // --- rolling window update ---
     lastEffectsUpdate = now;
-
-    // buffer + rolling sum
-    static int16_t sum = 0;
-    sum -= posBuf[pIdx];
-    int16_t d = (pos - lastX)*2;
+    
+    sum   -= posBuf[pIdx];
+    sumdt -= dtBuf[pIdx];
+    
+    int16_t d = pos - lastX;   // raw Δx
     posBuf[pIdx] = d;
-    sum += d;
-    pIdx = (pIdx + 1) % 5;
-
-    int16_t avg = sum / 5;
-    int16_t vel = avg / dt;
-    int16_t acc = ((vel - lastVelX) * 50) / dt;
-    params[0].frictionPositionChange = -vel;
-    params[0].inertiaAcceleration = -acc;
-    params[0].damperVelocity = -vel;
-
-    lastVelX = vel;
+    dtBuf[pIdx]  = dt;
+    
+    sum   += d;
+    sumdt += dt;
+    
+    pIdx = (pIdx + 1) % BUFLEN;
+    
     lastX = pos;
-  }
+    
+    // --- velocity over the whole window ---
+    // vel = (ΣΔx / ΣΔt) * scale
+    int32_t velNum = (int32_t)sum * 50;   // scale first
+    int16_t vel = velNum / (int32_t)sumdt;
+    
+    // --- acceleration from change in velocity ---
+    // a = Δv / Δt  (using *actual* dt, not window dt)
+    static int16_t lastVel = 0;
+    
+    int32_t dv = (int32_t)vel - lastVel;
+    
+    // scale factor: increase if you want stronger inertia
+    int16_t rawAcc = (dv * 1000) / dt;  
+    
+    lastVel = vel;
+    
+    
+    // --- smooth acceleration to remove peaks ---
+    static int16_t accFilt = 0;
+    
+    // 80% old, 20% new (tune to taste)
+    accFilt = (accFilt * 8 + rawAcc * 2) / 10;
+    
+    int16_t acc = accFilt;
+    
+    
+    // --- output ---
+    params[0].frictionPositionChange = -vel;
+    params[0].inertiaAcceleration    = acc;
+    params[0].damperVelocity         = -vel;
 
-  params[0].damperMaxVelocity = 50;
-  params[0].inertiaMaxAcceleration = 75;
-  params[0].frictionMaxPositionChange = 50;
+
+    //Serial.print(pos);
+    //Serial.print('\t');    
+    //Serial.print(sum);
+    //Serial.print('\t'); 
+    //Serial.print(vel);
+    //Serial.print('\t');
+    //Serial.print(acc);
+    //Serial.println();
+    
+  }
+  
+  params[0].damperMaxVelocity = 1500;
+  params[0].inertiaMaxAcceleration = 8000;
+  params[0].frictionMaxPositionChange = 1500;
   Joystick.setEffectParams(params);
   return dt;
 }

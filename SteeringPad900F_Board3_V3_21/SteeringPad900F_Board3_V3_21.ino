@@ -1558,8 +1558,9 @@ int16_t ProcessDataAndApply(unsigned long currentMillis)
         case 3: releaseTimer[0] = currentMillis; break;
         case 17: releaseTimer[1] = currentMillis; break;
         case 13: releaseTimer[2] = currentMillis; break;
+        default: Joystick.releaseButton(i-1);
       }
-      Joystick.releaseButton(i-1);
+      
     }
   }
   for(i = 0; i< 3; i++){

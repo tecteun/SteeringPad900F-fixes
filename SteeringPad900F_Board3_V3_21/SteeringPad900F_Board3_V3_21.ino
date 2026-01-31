@@ -527,8 +527,7 @@ void loop() {
     }
     if(currentMillis - screenUpdate > 50){
       screenUpdate = currentMillis;
-      Serial.println(steeringPosition);
-      showSensors(diffTime);
+      showSensors(diffTime, steeringPosition);
     }
   }
 
@@ -1366,7 +1365,7 @@ int16_t calculateEffectParams(unsigned long currentMillis, int16_t steeringPosit
   return diffTime;
 }
 
-void showSensors(int16_t diffTime){
+void showSensors(int16_t diffTime, int16_t steeringPosition){
   
     const __FlashStringHelper* arrow = F(">");
     oled.setRow(1); oled.setCol(0);

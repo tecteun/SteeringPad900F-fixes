@@ -164,7 +164,7 @@ private:
 	int32_t SawtoothDownForceCalculator(volatile TEffectState& effect);
 	int32_t SawtoothUpForceCalculator(volatile TEffectState& effect);
 	int32_t ConditionForceCalculator(volatile TEffectState& effect, float metric, uint8_t axis);
-	void forceCalculator(int32_t* forces);
+	void forceCalculator(int32_t* forces, uint8_t len = 1);
 	int32_t getEffectForce(volatile TEffectState& effect, Gains _gains, EffectParams _effect_params, uint8_t axis);
 protected:
 	int buildAndSet16BitValue(bool includeValue, int16_t value, int16_t valueMinimum, int16_t valueMaximum, int16_t actualMinimum, int16_t actualMaximum, uint8_t dataLocation[]);
@@ -273,7 +273,7 @@ public:
     // get USB PID data
 	void getUSBPID();
 	//force feedback Interfaces
-	void getForce(int32_t* forces);
+	void getForce(int32_t* forces, uint8_t len = 1);
 	//set gain functions
 	int8_t setGains(Gains* _gains){
 	    if(_gains != nullptr){

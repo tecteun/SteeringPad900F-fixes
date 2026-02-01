@@ -492,9 +492,9 @@ void Joystick_::getUSBPID()
 	DynamicHID().RecvfromUsb();
 }
 
-void Joystick_::getForce(int32_t* forces) 
+void Joystick_::getForce(int32_t* forces, uint8_t len = 1) 
 {
-	forceCalculator(forces);
+	forceCalculator(forces, len);
 }
 
 int32_t Joystick_::getEffectForce(volatile TEffectState& effect, Gains _gains, EffectParams _effect_params, uint8_t axis){
@@ -588,7 +588,7 @@ int32_t Joystick_::getEffectForce(volatile TEffectState& effect, Gains _gains, E
 }
 
 
-void Joystick_::forceCalculator(int32_t* forces) {
+void Joystick_::forceCalculator(int32_t* forces, uint8_t len = 1) {
 	forces[0] = 0;
     forces[1] = 0;
 	    for (int id = 0; id < MAX_EFFECTS; id++) {
@@ -598,13 +598,18 @@ void Joystick_::forceCalculator(int32_t* forces) {
 	    		(effect.duration == USB_DURATION_INFINITE)) && !DynamicHID().pidReportHandler.devicePaused)
 	    	{
 				forces[0] += (int32_t)(getEffectForce(effect, m_gains[0], m_effect_params[0], 0));
-				forces[1] += (int32_t)(getEffectForce(effect, m_gains[1], m_effect_params[1], 1));
+				if(len > 1){
+					forces[1] += (int32_t)(getEffectForce(effect, m_gains[1], m_effect_params[1], 1));
+				}
 	    	}
 	    }
 	forces[0] = (int32_t)((float)1.0 * forces[0] * m_gains[0].totalGain / 10000); // each effect gain * total effect gain = 10000
-	forces[1] = (int32_t)((float)1.0 * forces[1] * m_gains[1].totalGain / 10000); // each effect gain * total effect gain = 10000
 	forces[0] = map(forces[0], -10000, 10000, -255, 255);
-	forces[1] = map(forces[1], -10000, 10000, -255, 255);
+	if(len > 1){
+		forces[1] = (int32_t)((float)1.0 * forces[1] * m_gains[1].totalGain / 10000); // each effect gain * total effect gain = 10000
+		forces[1] = map(forces[1], -10000, 10000, -255, 255);
+	}
+	
 }
 
 int32_t Joystick_::ConstantForceCalculator(volatile TEffectState& effect) 

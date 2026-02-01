@@ -502,7 +502,9 @@ void loop() {
       sampleReady = true;
     }
     ADS.requestADC(lastRequest);
-    delayMicroseconds(1000);
+    //delayMicroseconds(1160); //(1s/860SPS)
+    RDY = false;
+    while(RDY == false) yield(); // wait for next interrupt
     RDY = false;
   }
   if(!sampleReady){

@@ -143,7 +143,7 @@ mmicro.build.extra_flags={build.usb_flags}
 // ADC
 const uint8_t SCL_PIN = SCL;
 const uint8_t SDA_PIN = SDA;
-const uint8_t DELAY_MICROS = 1;
+const uint8_t DELAY_MICROS = 0;
 
 #include <AceWire.h>
 #include <DigitalWriteFast.h>
@@ -371,8 +371,6 @@ byte steeringCalibrationStep = 0;
 int i;
 int iBlock;
 
-unsigned long screenUpdate = 0;
-
 //  ███████ ███████ ████████ ██    ██ ██████  
 //  ██      ██         ██    ██    ██ ██   ██ 
 //  ███████ █████      ██    ██    ██ ██████  
@@ -429,7 +427,7 @@ void setup()
   DisplayMainScreen();
 
   // START JOYSTICK //////////////////////////////////////////////
-  Joystick.begin(true);
+  Joystick.begin(false);
   Joystick.setXAxisRange(joystickMin, joystickMax);
   Joystick.setYAxisRange(joystickMin, joystickMax);
   Joystick.setZAxisRange(joystickMin, joystickMax);
@@ -488,6 +486,8 @@ void setup()
 //
 bool sampleReady = false;
 void loop() {
+  static unsigned long screenUpdate = 0;
+  static int16_t diffTime = 1;
   #if ADS_INTERRUPT_PIN_0_ENABLED
   if(!RDY){
     return;
@@ -509,7 +509,6 @@ void loop() {
   }
   sampleReady = false;
   #endif
-  
 
   // OPERATION MODES
   // 0 - In Game
@@ -519,20 +518,30 @@ void loop() {
   ReadButtons(currentMillis);
   ReadAnalogSensors();
   // IN GAME MODE
+  
   if (operationMode == 0)  
-  {
-    processAccelleratorPedal();
-    processBreakPedal();
-    int16_t diffTime = ProcessDataAndApply(currentMillis);
-    if (buttonMenu) {
-      operationMode = 1;  // Enable MENU
-      oled.clear();
-      menuLevel = lastMenuLevel; // Set MENU to first setting
-    }
-    if(currentMillis - screenUpdate > 50){
+  {    
+    if(currentMillis - screenUpdate > 100){
       screenUpdate = currentMillis;
       showSensors(diffTime, steeringPosition);
-    }
+      /*
+      for (int i = 0; i < 4; i++)
+      {  
+        Serial.print('\t');
+        Serial.print(adsValues[i]);
+      }
+      Serial.println();
+      */
+    }else{
+      processAccelleratorPedal();
+      processBreakPedal();
+      diffTime = ProcessDataAndApply(currentMillis);
+      if (buttonMenu) {
+        operationMode = 1;  // Enable MENU
+        oled.clear();
+        menuLevel = lastMenuLevel; // Set MENU to first setting
+      }
+    } 
   }
 
   if (operationMode == 1){
@@ -542,16 +551,9 @@ void loop() {
   UpdateOldButtons();
   oldOperationMode = operationMode;
 
-  /*
-  adsPause = true;
-  for (int i = 0; i < 4; i++)
-  {  
-    Serial.print('\t');
-    Serial.print(adsValues[i]);
-  }
-  Serial.println();
-  adsPause = false;
-  */
+  // update
+  Joystick.sendState();
+  
   #if ADS_INTERRUPT_PIN_0_ENABLED
   RDY = false;
   sampleReady = false;
@@ -1075,6 +1077,8 @@ void DisplayMainScreen()
   oled.print(F(" menu ")); /////////////////////////////
   oled.setInvertMode(false);
   oled.print(F(">")); /////////////////////////////
+
+  showSensorsLabels();
 }
 
 void DisplayMenu(const __FlashStringHelper* label, uint8_t spaces)
@@ -1420,46 +1424,70 @@ int16_t calculateEffectParams(unsigned long now, int16_t pos){
   Joystick.setEffectParams(params);
   return dt;
 }
-
-void showSensors(int16_t diffTime, int16_t steeringPosition){
-  
-    const __FlashStringHelper* arrow = F(">");
+void showSensorsLabels(){
+  const __FlashStringHelper* arrow = F(">");
     oled.setRow(1); oled.setCol(0);
     oled.setInvertMode(true);
     oled.print(F("ffb"));
     oled.setInvertMode(false);
-     oled.print(arrow);
-    oled.print(forces[0]);
-    oled.print(F("  "));
+    oled.print(arrow);
     
-    oled.setRow(1); oled.setCol(50);
+    oled.setCol(50);
     oled.setInvertMode(true);
     oled.print(F("x-axis")); 
     oled.setInvertMode(false);
     oled.print(arrow);
-    oled.print(steeringPosition);
-    oled.print(F("  "));
+    
     oled.setRow(2); oled.setCol(0);
     oled.setInvertMode(true);
     oled.print(F("btn")); 
     oled.setInvertMode(false);
     oled.print(arrow);
-    oled.print(F("                "));
-    oled.setCol(26);
-    for (i = 1; i <= 17; i++){
-      if(button[i]){
-        oled.print(i);
-        oled.print(F(" "));
-      }
-    }
+    
     oled.setRow(3); oled.setCol(0);
     oled.setInvertMode(true);
     oled.print(F("Hz")); 
     oled.setInvertMode(false);
     oled.print(arrow);
-    oled.print(1000/diffTime);
-    oled.print(F("  "));
+}
+void showSensors(int16_t diffTime, int16_t steeringPosition){
   
+    const __FlashStringHelper* arrow = F(">");
+    const __FlashStringHelper* empty = F("  ");
+
+    // print forces
+    oled.setRow(1); oled.setCol(25);
+    oled.print(forces[0]);
+    oled.print(empty);
+
+    // steering pos
+    oled.setCol(91);
+    oled.print(steeringPosition);
+    oled.print(empty);
+
+    // button states
+    oled.setRow(2); oled.setCol(25);
+    oled.clearToEOL();
+
+    char buf[32];
+    uint8_t pos = 0;
+    
+    for (uint8_t i = 1; i <= 17; i++) {
+      if (button[i]) {
+        // print tens digit only if >= 10
+        if (i >= 10) {
+          buf[pos++] = '0' + (i / 10);
+        }
+        buf[pos++] = '0' + (i % 10);  // ones digit
+        buf[pos++] = ' ';            // space
+      }
+    }
+    buf[pos] = '\0';
+    oled.print(buf);
+
+    oled.setRow(3); oled.setCol(16);
+    oled.print(1000/diffTime);
+    oled.print(empty);
 }
 
 void processBreakPedal(){

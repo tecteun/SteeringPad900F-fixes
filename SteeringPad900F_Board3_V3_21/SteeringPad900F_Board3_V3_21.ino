@@ -67,6 +67,7 @@ mmicro.build.mcu=atmega32u4
 mmicro.build.f_cpu=16000000L
 mmicro.build.vid=0x046d
 mmicro.build.pid=0x0000
+#to make the controller work with FH4 spoof the pid of "Logitech G27 Racing Wheel USB"
 #mmicro.build.pid=0xC29B
 mmicro.build.usb_product="Steering Pad 900-F"
 mmicro.build.usb_manufacturer="Logitech, Inc"
@@ -174,7 +175,7 @@ Joystick_ Joystick(
   JOYSTICK_DEFAULT_REPORT_ID,
   JOYSTICK_TYPE_JOYSTICK,
   17,     // Buttons (Max 32)
-  0,      // Hats (Max 2)
+  1,      // Hats (Max 2) - seems to be needed to be detected in FH4
   true,   // X Axis
   true,   // Y Axis
   true,   // Z Axis

@@ -304,7 +304,6 @@ const int16_t joystickMax = 32767;
 // FORCE FEEDBACK
   Gains gains[1];
   EffectParams params[1];
-  int16_t lastPosition = 0;
 
   #define motorPinDirection 8
   #define motorPinPWM 9
@@ -1553,15 +1552,8 @@ int16_t ProcessDataAndApply(unsigned long currentMillis)
   // GET FORCE FEEDBACK
   Joystick.getForce(forces);
 
-  
-  //                       damping
-  //                         velocity
-  int16_t finalForce = forces[0];// + (-(steeringPosition - lastPosition)) * 0.005; //(-velocity * (0.01 - ((float)forceGain / 200.0) * (0.01 - 0.001)));;
-  
-  lastPosition = steeringPosition;
-  
   // 4. Limitar força total
-  finalForce = constrain(finalForce, -255, 255);
+  int16_t finalForce = finalForce = constrain(forces[0], -255, 255);
 
   if (forces[0] > 0)
   {
@@ -1577,34 +1569,10 @@ int16_t ProcessDataAndApply(unsigned long currentMillis)
   {
     analogWrite(motorPinPWM, 0);
   }
-  static unsigned long releaseTimer[3] = {0};  
+  
   // BUTTONS
   for (i = 1; i <= 17; i++){
-     if (button[i] && !oldButton[i]){
-      Joystick.pressButton(i-1);
-     }
-  }
-
-  for (i = 1; i <= 17; i++){
-    if (!button[i] && oldButton[i]){
-      switch(i){
-        case 3: releaseTimer[0] = currentMillis; break;
-        case 17: releaseTimer[1] = currentMillis; break;
-        case 13: releaseTimer[2] = currentMillis; break;
-        default: Joystick.releaseButton(i-1);
-      }
-      
-    }
-  }
-  for(i = 0; i< 3; i++){
-    if(releaseTimer[i] && currentMillis - releaseTimer[i] > 100){
-      switch(i){
-        case 0: Joystick.releaseButton(3 - 1); break;
-        case 1: Joystick.releaseButton(17 - 1); break;
-        case 2: Joystick.releaseButton(13 - 1); break;
-      }
-      releaseTimer[i] = 0;
-    }
+     button[i] ? Joystick.pressButton(i-1) : Joystick.releaseButton(i-1);
   }
 
   return diffTime;

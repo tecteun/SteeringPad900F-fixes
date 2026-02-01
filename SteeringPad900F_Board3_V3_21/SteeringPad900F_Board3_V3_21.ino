@@ -140,6 +140,8 @@ mmicro.build.extra_flags={build.usb_flags}
 //  ██ ██  ██ ██ ██      ██      ██    ██      ██ ██ ██    ██ ██  ██ ██      ██ 
 //  ██ ██   ████  ██████ ███████  ██████  ███████ ██  ██████  ██   ████ ███████ 
 
+#include "avdweb_AnalogReadFast.h"
+
 // ADC
 const uint8_t SCL_PIN = SCL;
 const uint8_t SDA_PIN = SDA;
@@ -279,12 +281,12 @@ const int errorMargin = 7; // Adjustable error margin for reading the buttons
 
 const int thresholds[7] = 
 {
-  220, // button 3
-  355, // button 5
-  477, // button 6
+  224, // button 3
+  359, // button 5
+  480, // button 6
   161, // buttons 3 & 5
-  180, // buttons 3 & 6
-  258, // buttons 5 & 6
+  184, // buttons 3 & 6
+  259, // buttons 5 & 6
   140  // buttons 3 & 5 & 6
 }; 
 
@@ -1146,10 +1148,10 @@ void ReadAnalogSensors()
 
 void ReadButtons(unsigned long currentMillis)
 {
-  sensorValues[0] = analogRead(A0);
-  sensorValues[1] = analogRead(A1);
-  sensorValues[2] = analogRead(A2);
-  sensorValues[3] = analogRead(A3);
+  sensorValues[0] = analogReadFast(A0);
+  sensorValues[1] = analogReadFast(A1);
+  sensorValues[2] = analogReadFast(A2);
+  sensorValues[3] = analogReadFast(A3);
 
   for (i = 0; i < 15; i++)
   {

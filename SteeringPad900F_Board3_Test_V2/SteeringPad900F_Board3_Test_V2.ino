@@ -29,7 +29,7 @@
   By using this code, you acknowledge and agree to these terms.
   Use entirely at your own risk.
 */
-
+#include "avdweb_AnalogReadFast.h"
 const int thresholds[7] = 
 {
   236, // button 3
@@ -42,14 +42,26 @@ const int thresholds[7] =
 }; // 
 
 // ADC
+const uint8_t SCL_PIN = SCL;
+const uint8_t SDA_PIN = SDA;
+const uint8_t DELAY_MICROS = 0;
+
+#include <AceWire.h>
+#include <DigitalWriteFast.h>
+#include <ace_wire/SimpleWireFastInterface.h>
+using ace_wire::SimpleWireFastInterface;
+
+using WireInterface = SimpleWireFastInterface<SDA_PIN, SCL_PIN, DELAY_MICROS>;
+WireInterface wireInterface;
+
 #include "ADS1X15.h"
-ADS1115 ADS(0x48);
+ADS1115<WireInterface> ADS(0x48, &wireInterface);
 
 // DISPLAY
 #include "SSD1306Ascii.h"
-#include "SSD1306AsciiAvrI2c.h"
+#include "SSD1306AsciiAceWire.h"
 #define I2C_ADDRESS 0x3C
-SSD1306AsciiAvrI2c oled;
+SSD1306AsciiAceWire<WireInterface> oled(wireInterface);
 
 #define motorPinDirection 8
 #define motorPinPWM 9
@@ -68,6 +80,10 @@ bool prevDigitalStates[2] = {false, false};
 
 
 void setup() {
+
+// Set ADC prescaler to 16 → 1 MHz ADC clock
+ADCSRA = (ADCSRA & 0b11111000) | 0x04;
+
 
   Serial.begin(9600);
 
@@ -144,7 +160,7 @@ void updateSensorsDisplay() {
 void loop() {
   ReadAnalogSensors();
 
-  int sensorValues[4] = {analogRead(A0), analogRead(A1), analogRead(A2), analogRead(A3)};
+  int sensorValues[4] = {analogReadFast(A0), analogReadFast(A1), analogReadFast(A2), analogReadFast(A3)};
   bool buttons[13] = {false};
   bool hasChanged = false;
 
@@ -234,4 +250,3 @@ void loop() {
 
   delay(10);
 }
-

@@ -428,10 +428,11 @@ void setup()
   DisplayMainScreen();
 
   // START JOYSTICK //////////////////////////////////////////////
-  Joystick.begin(false);
+  Joystick.begin(false); // <- no autoupdate, end of mainloop does this
   Joystick.setXAxisRange(joystickMin, joystickMax);
   Joystick.setYAxisRange(joystickMin, joystickMax);
   Joystick.setZAxisRange(joystickMin, joystickMax);
+  
   gains[0].totalGain = forceGain;
   //gains[0].constantGain      = 100;
 	//gains[0].rampGain          = 0;
@@ -447,8 +448,12 @@ void setup()
 	//gains[0].customGain        = 0;
   
   Joystick.setGains(gains);
-  
-  //Joystick.setEffectParams(params);
+
+  // const effect settings
+  params[0].springMaxPosition = joystickMax;
+  params[0].damperMaxVelocity = 1500;
+  params[0].inertiaMaxAcceleration = 8000;
+  params[0].frictionMaxPositionChange = 1500;
 
   // START FORCE FEEDBACK /////////////////////////////////////////
   // Timer3 for FFB
@@ -510,7 +515,6 @@ void loop() {
   if(!sampleReady){
     return;
   }
-  sampleReady = false;
   #endif
 
   // OPERATION MODES
@@ -558,9 +562,9 @@ void loop() {
   Joystick.sendState();
   
   #if ADS_INTERRUPT_PIN_0_ENABLED
-  RDY = false;
   sampleReady = false;
   ADS.requestADC(0);
+  RDY = false;
   #endif
 }
 
@@ -1153,11 +1157,14 @@ void ReadButtons(unsigned long currentMillis)
   sensorValues[1] = analogReadFast(A1);
   sensorValues[2] = analogReadFast(A2);
   sensorValues[3] = analogReadFast(A3);
-
+/*
   for (i = 0; i < 15; i++)
   {
     buttonsMux[i] = false;
   }
+*/
+ // Fast reset of 15 booleans 
+  memset(buttonsMux, 0, 15);
 
   for (i = 0; i < 4; i++)
   {
@@ -1203,9 +1210,13 @@ void ReadButtons(unsigned long currentMillis)
 
 void UpdateOldButtons()
 {
+  /*
   for (i = 1; i <= 17; i++){
     oldButton[i] = button[i];
   }
+  */
+  
+  memcpy(oldButton + 1, button + 1, 17);
   oldButtonMenu = buttonMenu;
 }
 
@@ -1356,7 +1367,6 @@ int16_t calculateEffectParams(unsigned long now, int16_t pos){
   static int16_t sumdt = 0;
   static int16_t lastAvg = 0;
   
-  params[0].springMaxPosition = joystickMax;
   params[0].springPosition = -pos;
 
   int16_t dt = now - lastEffectsUpdate;
@@ -1421,9 +1431,6 @@ int16_t calculateEffectParams(unsigned long now, int16_t pos){
     
   }
   
-  params[0].damperMaxVelocity = 1500;
-  params[0].inertiaMaxAcceleration = 8000;
-  params[0].frictionMaxPositionChange = 1500;
   Joystick.setEffectParams(params);
   return dt;
 }

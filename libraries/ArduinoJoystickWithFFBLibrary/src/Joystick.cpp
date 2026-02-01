@@ -297,8 +297,9 @@ Joystick_::Joystick_(
 	if (axisCount > 0) {
 	
 		// USAGE (Pointer)
-		tempHidReportDescriptor[hidReportDescriptorSize++] = 0x09;
-		tempHidReportDescriptor[hidReportDescriptorSize++] = 0x01;
+		// REMOVED - not compatible with FH4
+		//tempHidReportDescriptor[hidReportDescriptorSize++] = 0x09;
+		//tempHidReportDescriptor[hidReportDescriptorSize++] = 0x01;
 
 		// LOGICAL_MINIMUM (-32767)
 		tempHidReportDescriptor[hidReportDescriptorSize++] = 0x16;
@@ -319,8 +320,9 @@ Joystick_::Joystick_(
 		tempHidReportDescriptor[hidReportDescriptorSize++] = axisCount;
 						
 		// COLLECTION (Physical)
-		tempHidReportDescriptor[hidReportDescriptorSize++] = 0xA1;
-		tempHidReportDescriptor[hidReportDescriptorSize++] = 0x00;
+		// REMOVED - not compatible with FH4
+		//tempHidReportDescriptor[hidReportDescriptorSize++] = 0xA1;
+		//tempHidReportDescriptor[hidReportDescriptorSize++] = 0x00;
 
 		if (includeXAxis == true) {
 			// USAGE (X)
@@ -363,7 +365,8 @@ Joystick_::Joystick_(
 		tempHidReportDescriptor[hidReportDescriptorSize++] = 0x02;
 		
 		// END_COLLECTION (Physical)
-		tempHidReportDescriptor[hidReportDescriptorSize++] = 0xc0;
+		// REMOVED - not compatible with FH4
+		//tempHidReportDescriptor[hidReportDescriptorSize++] = 0xc0;
 		
 	} // X, Y, Z, Rx, Ry, and Rz Axis	
 	

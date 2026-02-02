@@ -462,7 +462,9 @@ void setup()
   TCCR3A = 0;
   TCCR3B = 0;
   TCNT3 = 0;
-  OCR3A = 399;
+  //OCR3A = 399; // 5 kHz
+  OCR3A = 1999;  // 1 kHz (= equal to HID update rate)
+  //OCR3A = 3999;  // 500 Hz
   TCCR3B |= (1 << WGM32);
   TCCR3B |= (1 << CS31);
   TIMSK3 |= (1 << OCIE3A);

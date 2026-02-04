@@ -1597,7 +1597,7 @@ void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
 
 void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
 {
-    uint16_t out = map((steeringPosition >> 9)+64, 1, 128, 1, 123);
+    uint16_t out = map((steeringPosition >> 9)+64, 0, 127, 0, 122);
     const __FlashStringHelper* empty = F("  ");
     static uint8_t step = 4;
     static uint8_t pos = 0;
@@ -1636,24 +1636,24 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
             oled.clearToEOL();
             oled.print(buf);
             oled.setRow(2); 
-            oled.setCol(0); 
-            //oled.setInvertMode(true);
-            break;
+            oled.setCol(0);
+        break;
         case 3:
+            bool centered = out >= 60 && out <= 62;
             oled.setLetterSpacing(0);
-            oled.setCol(1);
-            oled.print("-----------");
-            if (out >= 60 && out <= 62){
-              oled.print("[-]");
+            oled.setInvertMode(centered);
+            oled.print(F("-----------   ------------"));
+            oled.setCol(61-5);
+            if (centered){
+              oled.print("( )");
             }else{
-              oled.print("]-[");
+              oled.print(") (");
             }
-            oled.print("------------");
             oled.setCol(out);
-            oled.print('|');
+            oled.print('O');
+            oled.setInvertMode(false);
         break;
             case 4:
-            //oled.setInvertMode(false);
             oled.setLetterSpacing(1);
             oled.setRow(3); oled.setCol(18);
             if(diffTimeAvg == 0)

@@ -1465,6 +1465,7 @@ int16_t calculateEffectParams(unsigned long now, int16_t pos){
   Joystick.setEffectParams(params);
   return dt;
 }
+
 void showSensorsLabels(){
   const __FlashStringHelper* arrow = F(">");
     oled.setRow(1); oled.setCol(0);
@@ -1491,6 +1492,27 @@ void showSensorsLabels(){
     oled.setInvertMode(false);
     oled.print(arrow);
 }
+void showSensorsLabels2(){
+  const __FlashStringHelper* arrow = F(">");
+    oled.setRow(1); oled.setCol(0);
+    oled.setInvertMode(true);
+    oled.print(F("ffb"));
+    oled.setInvertMode(false);
+    oled.print(arrow);
+    
+    oled.setCol(50);
+    oled.setInvertMode(true);
+    oled.print(F("btn")); 
+    oled.setInvertMode(false);
+    oled.print(arrow);
+    
+    oled.setRow(3); oled.setCol(0);
+    oled.setInvertMode(true);
+    oled.print(F("Hz")); 
+    oled.setInvertMode(false);
+    oled.print(arrow);
+}
+
 void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
 {
     const __FlashStringHelper* empty = F("  ");
@@ -1546,6 +1568,64 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
 
     step++;
     if (step > 5) step = 0;
+}
+
+void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
+{
+    uint16_t out = map((steeringPosition >> 9)+64, 1, 128, 1, 123);
+    const __FlashStringHelper* empty = F("  ");
+    static uint8_t step = 4;
+    static uint8_t pos = 0;
+    static char buf[32];
+    static double diffTimeAvg = 0;
+    switch (step)
+    {
+        case 0: // forces + steering (row 1)
+            oled.setRow(1); oled.setCol(25);
+            oled.print(forces[0]);
+            oled.print(empty);
+            oled.setCol(73);
+            break;
+        case 1: 
+            pos = 0;
+            memset(buf, 0, sizeof(buf)); //clear buf
+            for (uint8_t i = 1; i <= 17; i++) {
+              if (button[i]) {
+                // print tens digit only if >= 10
+                if (i >= 10) {
+                  buf[pos++] = '0' + (i / 10);
+                }
+                buf[pos++] = '0' + (i % 10);  // ones digit
+                buf[pos++] = ' ';            // space
+              }
+            }
+            buf[pos] = '\0';
+        break;
+        case 2: 
+            oled.clearToEOL();
+            oled.print(buf);
+            oled.setRow(2); 
+            oled.setCol(0); 
+            break;
+        case 3: 
+            oled.print("---------|-|---------");
+            oled.setRow(2); 
+            oled.setCol(out);
+            oled.print('0');
+        break;
+        case 4:
+        oled.setRow(3); oled.setCol(16);
+        if(diffTimeAvg == 0)
+          diffTimeAvg = diffTime;
+        else
+          diffTimeAvg = (diffTimeAvg + diffTime)/2.0;
+          oled.print((uint16_t)(1000.0/diffTimeAvg));
+          oled.print(empty);
+        break;
+    }
+
+    step++;
+    if (step > 4) step = 0;
 }
 
 

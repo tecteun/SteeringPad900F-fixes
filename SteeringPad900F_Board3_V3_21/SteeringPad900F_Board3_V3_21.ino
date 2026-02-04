@@ -1611,13 +1611,16 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
 
     switch (step)
     {
-        case 0: // forces + steering (row 1)
+        case 0:
+        {
             oled.setRow(1); oled.setCol(25);
             oled.print(forces[0]);
             oled.print(empty);
             oled.setCol(73);
             break;
+        }
         case 1: 
+        {
             pos = 0;
             memset(buf, 0, sizeof(buf)); //clear buf
             for (uint8_t i = 1; i <= 17; i++) {
@@ -1631,14 +1634,18 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
               }
             }
             buf[pos] = '\0';
+        }
         break;
         case 2: 
+        {
             oled.clearToEOL();
             oled.print(buf);
             oled.setRow(2); 
             oled.setCol(0);
+        }
         break;
         case 3:
+        {
             bool centered = out >= 60 && out <= 62;
             oled.setLetterSpacing(0);
             oled.setInvertMode(centered);
@@ -1652,16 +1659,20 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
             oled.setCol(out);
             oled.print('O');
             oled.setInvertMode(false);
+        }
         break;
-            case 4:
+        case 4:
+        {
             oled.setLetterSpacing(1);
             oled.setRow(3); oled.setCol(18);
-            if(diffTimeAvg == 0)
+            if(diffTimeAvg == 0){
               diffTimeAvg = diffTime;
-            else
+            }else{
               diffTimeAvg = (diffTimeAvg + diffTime)/2.0;
               oled.print((uint16_t)(1000.0/diffTimeAvg));
               oled.print(empty);
+            }
+        }
         break;
     }
 

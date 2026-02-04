@@ -494,15 +494,22 @@ void setup()
 //  ██      ██    ██ ██    ██ ██      
 //  ███████  ██████   ██████  ██      
 //
+/*
 volatile bool sofTick = false;
+*/
+#define debug 0
 bool sampleReady = false;
 void loop() {
-  unsigned long us = micros();
-  unsigned long currentMillis = millis();
   static unsigned long screenUpdate = 0;
+  static int16_t diffTime = 1;
+  unsigned long currentMillis = millis();
+  
+  #if debug
+  unsigned long us = micros();
   static unsigned long lastTime = 0;
   static int rps = 0;
-  static int16_t diffTime = 1;
+  #endif
+  
   /*
     // Check SOF flag manually
     // To send hid packet exatly at start of frame
@@ -574,6 +581,7 @@ void loop() {
   UpdateOldButtons();
   oldOperationMode = operationMode;
 
+  #if debug
   rps++;
   
   if (millis() - lastTime >= 1000){
@@ -583,6 +591,7 @@ void loop() {
     Serial.println(micros() - us);
     rps = 0;
   }
+  #endif
 }
 
 

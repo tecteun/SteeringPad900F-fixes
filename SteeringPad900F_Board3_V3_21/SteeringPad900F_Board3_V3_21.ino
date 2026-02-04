@@ -1468,7 +1468,7 @@ int16_t calculateEffectParams(unsigned long now, int16_t pos){
   return dt;
 }
 
-void showSensorsLabels2(){
+void showSensorsLabels(){
   const __FlashStringHelper* arrow = F(">");
     oled.setRow(1); oled.setCol(0);
     oled.setInvertMode(true);
@@ -1494,7 +1494,7 @@ void showSensorsLabels2(){
     oled.setInvertMode(false);
     oled.print(arrow);
 }
-void showSensorsLabels(){
+void showSensorsLabels2(){
   const __FlashStringHelper* arrow = F(">");
     oled.setLetterSpacing(0);
     oled.setRow(1); oled.setCol(0);
@@ -1530,7 +1530,7 @@ void showSensorsLabels(){
     oled.setLetterSpacing(1);
 }
 
-void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
+void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
 {
   
     const __FlashStringHelper* empty = F("  ");
@@ -1591,7 +1591,7 @@ void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
   if (step > 5) step = 0;
 }
 
-void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
+void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
 {
     uint16_t out = map((steeringPosition >> 9)+64, 1, 128, 1, 123);
     const __FlashStringHelper* empty = F("  ");

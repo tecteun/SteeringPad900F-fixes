@@ -530,20 +530,21 @@ void loop() {
   }
   if(RDY && !sampleReady){
     byte lastRequest = ADS.lastRequest();
+    
     adsValues[lastRequest] = ADS.getValue();
     lastRequest++; //prepare to sample next channel
     if(lastRequest > 2){ 
       lastRequest = 0;
       sampleReady = true;
+    }else{
+      ADS.requestADC(lastRequest);
+      //delayMicroseconds(1160); //(1s/860SPS)
+      RDY = false;
     }
-    ADS.requestADC(lastRequest);
-    //delayMicroseconds(1160); //(1s/860SPS)
-    RDY = false;
   }
   if(!sampleReady){
     return;
   }
-  sampleReady = false;
   #endif
 
   // OPERATION MODES
@@ -557,9 +558,9 @@ void loop() {
   
   if (operationMode == 0)  
   {    
-    if(false){ //if(currentMillis - screenUpdate > 100){
+    if(currentMillis - screenUpdate > 100){
       screenUpdate = currentMillis;
-      showSensorsSM(diffTime, steeringPosition);
+      showSensors(diffTime, steeringPosition);
     }else{
       processAccelleratorPedal();
       processBreakPedal();
@@ -591,6 +592,15 @@ void loop() {
     Serial.println(micros() - us);
     rps = 0;
   }
+  #endif
+
+  #if ADS_INTERRUPT_PIN_0_ENABLED
+  // gather new sample in next loop
+  sampleReady = false;
+  // reset adc to start with channel 0 again
+  ADS.requestADC(0);
+  // reset RDY flag
+  RDY = false;
   #endif
 }
 

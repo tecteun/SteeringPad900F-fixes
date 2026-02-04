@@ -500,7 +500,6 @@ volatile bool sofTick = false;
 #define debug 0
 bool sampleReady = false;
 void loop() {
-  static unsigned long screenUpdate = 0;
   static int16_t diffTime = 1;
   unsigned long currentMillis = millis();
   
@@ -555,22 +554,18 @@ void loop() {
   ReadButtons(currentMillis);
   ReadAnalogSensors();
   // IN GAME MODE
-  
   if (operationMode == 0)  
   {    
-    if(currentMillis - screenUpdate > 100){
-      screenUpdate = currentMillis;
-      showSensors(diffTime, steeringPosition);
-    }else{
-      processAccelleratorPedal();
-      processBreakPedal();
-      diffTime = ProcessDataAndApply(currentMillis);
-      if (buttonMenu) {
-        operationMode = 1;  // Enable MENU
-        oled.clear();
-        menuLevel = lastMenuLevel; // Set MENU to first setting
-      }
-    } 
+    showSensorsSM(diffTime, steeringPosition);
+    processAccelleratorPedal();
+    processBreakPedal();
+    diffTime = ProcessDataAndApply(currentMillis);
+    if (buttonMenu) {
+      operationMode = 1;  // Enable MENU
+      oled.clear();
+      menuLevel = lastMenuLevel; // Set MENU to first setting
+    }
+  
   }
 
   if (operationMode == 1){
@@ -1500,37 +1495,52 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
 {
     const __FlashStringHelper* empty = F("  ");
     static uint8_t step = 0;
-
-    // persistent buffer for button line
-    static char    btnBuf[32];
-    static uint8_t btnPos = 0;
-
+    static uint8_t pos = 0;
+    static char buf[32];
     switch (step)
     {
         case 0: // forces + steering (row 1)
+            oled.setRow(1); oled.setCol(25);
+            oled.print(forces[0]);
+            oled.print(empty);
+            break;
+        case 1: 
             oled.setCol(91);
             oled.print(steeringPosition);
             oled.print(empty);
             break;
-
-        case 1: // clear button row (row 2)
-
-            break;
-
-        case 2: // build button buffer (same logic as original)
-        
+        case 2: 
+            oled.setRow(2); oled.setCol(25);
+            
+            memset(buf, 0, sizeof(buf)); //clear buf
+            pos = 0;
         break;
-
-        case 3: // print button buffer
-            break;
-
+        case 3: 
+            for (uint8_t i = 1; i <= 17; i++) {
+              if (button[i]) {
+                // print tens digit only if >= 10
+                if (i >= 10) {
+                  buf[pos++] = '0' + (i / 10);
+                }
+                buf[pos++] = '0' + (i % 10);  // ones digit
+                buf[pos++] = ' ';            // space
+              }
+            }
+            buf[pos] = '\0';
+        break;
         case 4: // FPS (row 3)
-
+            oled.clearToEOL();
+            oled.print(buf);
             break;
+        case 5:
+        oled.setRow(3); oled.setCol(16);
+    oled.print(1000/diffTime);
+    oled.print(empty);
+    break;
     }
 
     step++;
-    if (step >= 5) step = 0;
+    if (step > 5) step = 0;
 }
 
 

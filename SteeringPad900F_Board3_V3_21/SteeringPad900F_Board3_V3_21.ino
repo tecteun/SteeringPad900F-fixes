@@ -497,8 +497,11 @@ void setup()
 volatile bool sofTick = false;
 bool sampleReady = false;
 void loop() {
+  unsigned long us = micros();
   unsigned long currentMillis = millis();
   static unsigned long screenUpdate = 0;
+  static unsigned long lastTime = 0;
+  static int rps = 0;
   static int16_t diffTime = 1;
   /*
     // Check SOF flag manually
@@ -540,7 +543,6 @@ void loop() {
   // 0 - In Game
   // 1 - In Menu
   // 2 - In Confirmation
-  unsigned long us = micros();
   
   ReadButtons(currentMillis);
   ReadAnalogSensors();
@@ -572,7 +574,15 @@ void loop() {
   UpdateOldButtons();
   oldOperationMode = operationMode;
 
-  //Serial.println(micros() - us);
+  rps++;
+  
+  if (millis() - lastTime >= 1000){
+    lastTime = millis();
+    Serial.print(rps);
+    Serial.print("rps looptime:");
+    Serial.println(micros() - us);
+    rps = 0;
+  }
 }
 
 

@@ -1108,7 +1108,9 @@ void DisplayMainScreen()
   oled.clear();
   oled.setInvertMode(false);
   oled.setRow(0); oled.setCol(0);
+  oled.setLetterSpacing(0);
   oled.print(F("STEERING PAD 900-F")); ////////////////////////////
+  oled.setLetterSpacing(1);
   oled.setRow(3); oled.setCol(0);
   oled.print(F("         hold ")); /////////////////////////////
   oled.setInvertMode(true);
@@ -1466,7 +1468,7 @@ int16_t calculateEffectParams(unsigned long now, int16_t pos){
   return dt;
 }
 
-void showSensorsLabels(){
+void showSensorsLabels2(){
   const __FlashStringHelper* arrow = F(">");
     oled.setRow(1); oled.setCol(0);
     oled.setInvertMode(true);
@@ -1492,34 +1494,56 @@ void showSensorsLabels(){
     oled.setInvertMode(false);
     oled.print(arrow);
 }
-void showSensorsLabels2(){
+void showSensorsLabels(){
   const __FlashStringHelper* arrow = F(">");
+    oled.setLetterSpacing(0);
     oled.setRow(1); oled.setCol(0);
     oled.setInvertMode(true);
+
+    oled.print(F(" "));
+    oled.setCol(2);
     oled.print(F("ffb"));
+    oled.print(F(" "));
+    oled.setCol(19);
     oled.setInvertMode(false);
     oled.print(arrow);
     
     oled.setCol(50);
     oled.setInvertMode(true);
-    oled.print(F("btn")); 
+    oled.print(F(" "));
+    oled.setCol(52);
+    oled.print(F("btn"));
+    oled.print(F(" "));
+    oled.setCol(69);
     oled.setInvertMode(false);
     oled.print(arrow);
     
     oled.setRow(3); oled.setCol(0);
     oled.setInvertMode(true);
+    oled.print(F(" "));
+    oled.setCol(2);
     oled.print(F("Hz")); 
+    oled.print(F(" "));
+    oled.setCol(14);
     oled.setInvertMode(false);
     oled.print(arrow);
+    oled.setLetterSpacing(1);
 }
 
-void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
+void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
 {
+  
     const __FlashStringHelper* empty = F("  ");
-    static uint8_t step = 0;
+    static uint8_t step = 5;
     static uint8_t pos = 0;
     static char buf[32];
     static double diffTimeAvg = 0;
+
+    if(diffTimeAvg == 0)
+      diffTimeAvg = diffTime;
+    else
+      diffTimeAvg = ((.8*diffTimeAvg) + (.2*diffTime));
+
     switch (step)
     {
         case 0: // forces + steering (row 1)
@@ -1557,20 +1581,17 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
             break;
         case 5:
         oled.setRow(3); oled.setCol(16);
-        if(diffTimeAvg == 0)
-          diffTimeAvg = diffTime;
-        else
-          diffTimeAvg = (diffTimeAvg + diffTime)/2.0;
+        
           oled.print((uint16_t)(1000.0/diffTimeAvg));
           oled.print(empty);
         break;
     }
 
-    step++;
-    if (step > 5) step = 0;
+  step++;
+  if (step > 5) step = 0;
 }
 
-void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
+void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
 {
     uint16_t out = map((steeringPosition >> 9)+64, 1, 128, 1, 123);
     const __FlashStringHelper* empty = F("  ");
@@ -1578,6 +1599,12 @@ void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
     static uint8_t pos = 0;
     static char buf[32];
     static double diffTimeAvg = 0;
+
+    if(diffTimeAvg == 0)
+      diffTimeAvg = diffTime;
+    else
+      diffTimeAvg = ((.8*diffTimeAvg) + (.2*diffTime));
+
     switch (step)
     {
         case 0: // forces + steering (row 1)
@@ -1606,21 +1633,26 @@ void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
             oled.print(buf);
             oled.setRow(2); 
             oled.setCol(0); 
+            //oled.setInvertMode(true);
             break;
-        case 3: 
-            oled.print("---------|-|---------");
+        case 3:
+            oled.setLetterSpacing(0);
+            oled.setCol(1);
+            oled.print("-----------]-[------------");
             oled.setRow(2); 
             oled.setCol(out);
-            oled.print('0');
+            oled.print('|');
         break;
-        case 4:
-        oled.setRow(3); oled.setCol(16);
-        if(diffTimeAvg == 0)
-          diffTimeAvg = diffTime;
-        else
-          diffTimeAvg = (diffTimeAvg + diffTime)/2.0;
-          oled.print((uint16_t)(1000.0/diffTimeAvg));
-          oled.print(empty);
+            case 4:
+            //oled.setInvertMode(false);
+            oled.setLetterSpacing(1);
+            oled.setRow(3); oled.setCol(18);
+            if(diffTimeAvg == 0)
+              diffTimeAvg = diffTime;
+            else
+              diffTimeAvg = (diffTimeAvg + diffTime)/2.0;
+              oled.print((uint16_t)(1000.0/diffTimeAvg));
+              oled.print(empty);
         break;
     }
 

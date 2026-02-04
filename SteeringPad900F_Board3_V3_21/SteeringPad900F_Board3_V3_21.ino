@@ -1497,6 +1497,7 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
     static uint8_t step = 0;
     static uint8_t pos = 0;
     static char buf[32];
+    static double diffTimeAvg = 0;
     switch (step)
     {
         case 0: // forces + steering (row 1)
@@ -1534,9 +1535,13 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
             break;
         case 5:
         oled.setRow(3); oled.setCol(16);
-    oled.print(1000/diffTime);
-    oled.print(empty);
-    break;
+        if(diffTimeAvg == 0)
+          diffTimeAvg = diffTime;
+        else
+          diffTimeAvg = (diffTimeAvg + diffTime)/2.0;
+          oled.print((uint16_t)(1000.0/diffTimeAvg));
+          oled.print(empty);
+        break;
     }
 
     step++;

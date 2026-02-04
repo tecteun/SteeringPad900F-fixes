@@ -171,7 +171,7 @@ Joystick_::Joystick_(
 		tempHidReportDescriptor[hidReportDescriptorSize++] = 0x81;
 		tempHidReportDescriptor[hidReportDescriptorSize++] = 0x02;
 
-		if (buttonPaddingBits > 0) {
+		if (buttonPaddingBits > 0) { // Padding Bits Needed
 			
 			// REPORT_SIZE (1)
 			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x75;
@@ -185,7 +185,19 @@ Joystick_::Joystick_(
 			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x81;
 			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x03;
 			
-		} // Padding Bits Needed
+		} else { 
+			// No padding bits → but we MUST realign the parser
+			// Reset REPORT_SIZE to 8 bits for the next fields
+			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x75;
+			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x08;
+
+			// Reset REPORT_COUNT to 1 (or whatever your next field expects)
+			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x95;
+			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x01;
+		}
+
+		
+		
 	} // Buttons
 
 	if ((axisCount > 0) || (_hatSwitchCount > 0)) {
@@ -195,7 +207,8 @@ Joystick_::Joystick_(
 		tempHidReportDescriptor[hidReportDescriptorSize++] = 0x01;
 		
 	}
-
+	
+	// this may have a bug?
 	if (_hatSwitchCount > 0) {
 
 		// USAGE (Hat Switch)

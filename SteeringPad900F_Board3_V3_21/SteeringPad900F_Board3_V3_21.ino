@@ -175,7 +175,7 @@ Joystick_ Joystick(
   JOYSTICK_DEFAULT_REPORT_ID,
   JOYSTICK_TYPE_JOYSTICK,
   17,     // Buttons (Max 32)
-  1,      // Hats (Max 2) - seems to be needed to be detected in FH4
+  0,      // Hats (Max 2) - seems to be needed to be detected in FH4 ( > 0 makes it crash in beamNG because _hidReportSize too big?)
   true,   // X Axis
   true,   // Y Axis
   true,   // Z Axis
@@ -381,7 +381,8 @@ int iBlock;
 //
 void setup()
 {
-  UDIEN &= ~(1 << SOFE);   // Disable USB Start-of-Frame interrupt
+  //UDIEN &= ~(1 << SOFE);   // Disable USB Start-of-Frame interrupt
+  //UDIEN |= (1 << SOFE); // Enable SOF interrupt
 
   //Serial.begin(230400);
 
@@ -493,10 +494,26 @@ void setup()
 //  ██      ██    ██ ██    ██ ██      
 //  ███████  ██████   ██████  ██      
 //
+volatile bool sofTick = false;
 bool sampleReady = false;
 void loop() {
+  unsigned long currentMillis = millis();
   static unsigned long screenUpdate = 0;
   static int16_t diffTime = 1;
+  /*
+    // Check SOF flag manually
+    // To send hid packet exatly at start of frame
+    if (UDINT & (1 << SOFI)) {
+      UDINT &= ~(1 << SOFI);   // clear SOF flag
+      sofTick = true;
+    }
+  
+    // update
+    if(sofTick){
+      sofTick = false;
+      Joystick.sendState();
+    }
+  */
   #if ADS_INTERRUPT_PIN_0_ENABLED
   if(!RDY){
     return;
@@ -512,36 +529,28 @@ void loop() {
     ADS.requestADC(lastRequest);
     //delayMicroseconds(1160); //(1s/860SPS)
     RDY = false;
-    while(RDY == false) yield(); // wait for next interrupt
-    RDY = false;
   }
   if(!sampleReady){
     return;
   }
+  sampleReady = false;
   #endif
 
   // OPERATION MODES
   // 0 - In Game
   // 1 - In Menu
   // 2 - In Confirmation
-  unsigned long currentMillis = millis();
+  unsigned long us = micros();
+  
   ReadButtons(currentMillis);
   ReadAnalogSensors();
   // IN GAME MODE
   
   if (operationMode == 0)  
   {    
-    if(currentMillis - screenUpdate > 100){
+    if(false){ //if(currentMillis - screenUpdate > 100){
       screenUpdate = currentMillis;
-      showSensors(diffTime, steeringPosition);
-      /*
-      for (int i = 0; i < 4; i++)
-      {  
-        Serial.print('\t');
-        Serial.print(adsValues[i]);
-      }
-      Serial.println();
-      */
+      showSensorsSM(diffTime, steeringPosition);
     }else{
       processAccelleratorPedal();
       processBreakPedal();
@@ -558,17 +567,12 @@ void loop() {
     MenuOperations();  // IN MENU MODE
   }
 
+  Joystick.sendState();
+
   UpdateOldButtons();
   oldOperationMode = operationMode;
 
-  // update
-  Joystick.sendState();
-  
-  #if ADS_INTERRUPT_PIN_0_ENABLED
-  sampleReady = false;
-  ADS.requestADC(0);
-  RDY = false;
-  #endif
+  //Serial.println(micros() - us);
 }
 
 
@@ -1142,9 +1146,9 @@ void DisplayConfirmationScreen()
 void ReadAnalogSensors()
 {
   #if ADS_INTERRUPT_PIN_0_ENABLED
-  steeringSensor = adsValues[0];
-  brakeSensor = adsValues[1];
-  acceleratorSensor = adsValues[2];
+  steeringSensor = adsValues[1];
+  brakeSensor = adsValues[2];
+  acceleratorSensor = adsValues[0];
   //Serial.println(steeringSensor);
 
   #else
@@ -1463,6 +1467,44 @@ void showSensorsLabels(){
     oled.setInvertMode(false);
     oled.print(arrow);
 }
+void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
+{
+    const __FlashStringHelper* empty = F("  ");
+    static uint8_t step = 0;
+
+    // persistent buffer for button line
+    static char    btnBuf[32];
+    static uint8_t btnPos = 0;
+
+    switch (step)
+    {
+        case 0: // forces + steering (row 1)
+            oled.setCol(91);
+            oled.print(steeringPosition);
+            oled.print(empty);
+            break;
+
+        case 1: // clear button row (row 2)
+
+            break;
+
+        case 2: // build button buffer (same logic as original)
+        
+        break;
+
+        case 3: // print button buffer
+            break;
+
+        case 4: // FPS (row 3)
+
+            break;
+    }
+
+    step++;
+    if (step >= 5) step = 0;
+}
+
+
 void showSensors(int16_t diffTime, int16_t steeringPosition){
   
     const __FlashStringHelper* arrow = F(">");

@@ -101,10 +101,12 @@ void DynamicHID_::AppendDescriptor(DynamicHIDSubDescriptor *node)
 
 int DynamicHID_::SendReport(uint8_t id, const void* data, int len)
 {
-	uint8_t p[len + 1];
-	p[0] = id;
-	memcpy(&p[1], data, len);
-	return USB_Send(PID_ENDPOINT_IN | TRANSFER_RELEASE, p, len + 1);
+	auto ret = USB_Send(PID_ENDPOINT_IN, &id, 1);
+	if (ret < 0) return ret;
+	auto ret2 = USB_Send(pluggedEndpoint | TRANSFER_RELEASE, data, len);
+	if (ret2 < 0) return ret2;
+	USB_Flush(PID_ENDPOINT_IN | TRANSFER_RELEASE);
+	return ret + ret2;
 }
 
 int DynamicHID_::RecvData(byte* data)
@@ -119,6 +121,7 @@ int DynamicHID_::RecvData(byte* data)
 void DynamicHID_::RecvfromUsb() 
 {
 	if (usb_Available() > 0) {
+		uint8_t out_ffbdata[64];
 		uint16_t len = USB_Recv(PID_ENDPOINT_OUT, &out_ffbdata, 64);
 		if (len >= 0) {
 			pidReportHandler.UppackUsbData(out_ffbdata, len);

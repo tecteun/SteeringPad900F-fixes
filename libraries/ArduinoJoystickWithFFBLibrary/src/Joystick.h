@@ -60,6 +60,8 @@
 #define Y_AXIS_ENABLE                      0x02
 #define FORCE_FEEDBACK_MAXGAIN              100
 #define DEG_TO_RAD              ((float)((float)3.14159265359 / 180.0))
+// Precompute everything into one constant: 
+#define DIR_TO_RAD (0.02470831096f) // = 360/255 * (pi/180) 
 
 struct Gains{
     uint8_t totalGain         = FORCE_FEEDBACK_MAXGAIN;

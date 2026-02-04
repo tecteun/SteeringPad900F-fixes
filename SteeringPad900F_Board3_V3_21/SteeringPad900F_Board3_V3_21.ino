@@ -459,6 +459,7 @@ void setup()
 
   // START FORCE FEEDBACK /////////////////////////////////////////
   // Timer3 for FFB
+  /*
   cli();
   TCCR3A = 0;
   TCCR3B = 0;
@@ -470,6 +471,7 @@ void setup()
   TCCR3B |= (1 << CS31);
   TIMSK3 |= (1 << OCIE3A);
   sei();
+  */
   pinMode(motorPinDirection, OUTPUT);
   pinMode(motorPinPWM, OUTPUT);
   pinMode(motorPinEnable, OUTPUT);
@@ -550,13 +552,14 @@ void loop() {
   // 0 - In Game
   // 1 - In Menu
   // 2 - In Confirmation
-  
+  Joystick.getUSBPID();  // update FFB
   ReadButtons(currentMillis);
   ReadAnalogSensors();
   // IN GAME MODE
   if (operationMode == 0)  
   {    
     showSensorsSM(diffTime, steeringPosition);
+    //delay(200); <-- test big blocker
     processAccelleratorPedal();
     processBreakPedal();
     diffTime = ProcessDataAndApply(currentMillis);
@@ -1338,12 +1341,13 @@ void CheckButton3Press(unsigned long currentMillis)
 //  ██   ██ ██    ██  ██ ██      ██      ██    ██ ██  ██ ██ ██         ██    ██ ██    ██ ██  ██ ██      ██ 
 //  ██   ██  ██████  ██   ██     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
 //
-
+/*
 // TIMER3 INTERRUPTION
 ISR(TIMER3_COMPA_vect)
 {
   Joystick.getUSBPID();  // update FFB
 }
+*/
 
 
 // EASE IN CALCULATION
@@ -1468,7 +1472,7 @@ int16_t calculateEffectParams(unsigned long now, int16_t pos){
   return dt;
 }
 
-void showSensorsLabels(){
+void showSensorsLabels2(){
   const __FlashStringHelper* arrow = F(">");
     oled.setRow(1); oled.setCol(0);
     oled.setInvertMode(true);
@@ -1494,7 +1498,7 @@ void showSensorsLabels(){
     oled.setInvertMode(false);
     oled.print(arrow);
 }
-void showSensorsLabels2(){
+void showSensorsLabels(){
   const __FlashStringHelper* arrow = F(">");
     oled.setLetterSpacing(0);
     oled.setRow(1); oled.setCol(0);
@@ -1530,7 +1534,7 @@ void showSensorsLabels2(){
     oled.setLetterSpacing(1);
 }
 
-void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
+void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
 {
   
     const __FlashStringHelper* empty = F("  ");
@@ -1591,7 +1595,7 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
   if (step > 5) step = 0;
 }
 
-void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
+void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
 {
     uint16_t out = map((steeringPosition >> 9)+64, 1, 128, 1, 123);
     const __FlashStringHelper* empty = F("  ");
@@ -1638,8 +1642,13 @@ void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
         case 3:
             oled.setLetterSpacing(0);
             oled.setCol(1);
-            oled.print("-----------]-[------------");
-            oled.setRow(2); 
+            oled.print("-----------");
+            if (out >= 60 && out <= 62){
+              oled.print("[-]");
+            }else{
+              oled.print("]-[");
+            }
+            oled.print("------------");
             oled.setCol(out);
             oled.print('|');
         break;

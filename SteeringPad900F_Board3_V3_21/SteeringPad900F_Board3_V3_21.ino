@@ -171,10 +171,12 @@ SSD1306AsciiAceWire<WireInterface> oled(wireInterface);
 // JOYSTICK
 #include <Joystick.h>
 
+#define NUMBUTTONS 22
+
 Joystick_ Joystick(
   JOYSTICK_DEFAULT_REPORT_ID,
   JOYSTICK_TYPE_JOYSTICK,
-  17,     // Buttons (Max 32)
+  NUMBUTTONS,     // Buttons (Max 32)
   0,      // Hats (Max 2) - seems to be needed to be detected in FH4 ( > 0 makes it crash in beamNG because _hidReportSize too big?)
   true,   // X Axis
   true,   // Y Axis
@@ -329,14 +331,16 @@ byte menuLength = 7;
 //    ████   ██   ██ ██   ██ ██ ██   ██ ██████  ███████ ███████ ███████ 
 //   
 
+
+
 // BUTTONS
 int sensorValues[4];
 bool buttonsMux[15] = {false};
 
-bool button[18];
+bool button[NUMBUTTONS + 1]; // use 1 based index for readability
 bool buttonMenu;
 
-bool oldButton[18];
+bool oldButton[NUMBUTTONS + 1]; // use 1 based index for readability
 bool oldButtonMenu;
 
 bool button3WasPressed;
@@ -1217,19 +1221,19 @@ void ReadButtons(unsigned long currentMillis)
   button[2] = !digitalRead(7);
 
   CheckButton3Press(currentMillis);
-  button[4] = buttonsMux[6];
-  button[5] = buttonsMux[10];
+  if (!button13OnHold) button[4] = buttonsMux[6];
+  if (!button13OnHold) button[5] = buttonsMux[10];
   if (!button13OnHold) button[6] = buttonsMux[11];
-  button[7] = buttonsMux[7];
-  button[8] = buttonsMux[8];
+  if (!button13OnHold) button[7] = buttonsMux[7];
+  if (!button13OnHold) button[8] = buttonsMux[8];
   if (!button13OnHold) button[9] = buttonsMux[3];
-  button[10] = buttonsMux[4];
-  if (!button13OnHold) button[11] =  buttonsMux[5];
+  if (!button13OnHold) button[10]= buttonsMux[4];
+  if (!button13OnHold) button[11]= buttonsMux[5];
   button[12] = buttonsMux[1];
   CheckButton13press();
   if (button13OnHold)
   {
-    if(buttonsMux[3] || buttonsMux[5] || buttonsMux[9] || buttonsMux[11])
+    if(buttonsMux[3] || buttonsMux[4] || buttonsMux[5] || buttonsMux[6] || buttonsMux[7] ||  buttonsMux[8] || buttonsMux[9] || buttonsMux[10] || buttonsMux[11])
     {
       if(!button13AsFunction) button13AsFunction = true;
     }
@@ -1237,9 +1241,15 @@ void ReadButtons(unsigned long currentMillis)
 
   if (button13AsFunction)
   {
-    button[14] = buttonsMux[3];
-    button[15] = buttonsMux[5];
-    button[16] = buttonsMux[11];
+    // 3/14 is special, also has menu function -> CheckButton3Press
+    button[15] = buttonsMux[6];
+    button[16] = buttonsMux[10];
+    button[17] = buttonsMux[11];
+    button[18] = buttonsMux[7];
+    button[19] = buttonsMux[8];
+    button[20] = buttonsMux[3];
+    button[21] = buttonsMux[4];
+    button[22] = buttonsMux[5];
   }
 }
 
@@ -1252,7 +1262,7 @@ void UpdateOldButtons()
   }
   */
   
-  memcpy(oldButton + 1, button + 1, 17);
+  memcpy(oldButton + 1, button + 1, NUMBUTTONS);
   oldButtonMenu = buttonMenu;
 }
 
@@ -1273,9 +1283,15 @@ void CheckButton13press()
   else if (!buttonsMux[2] && button13OnHold)
   {
     button13OnHold = false;
-    button[14] = false;
+
     button[15] = false;
     button[16] = false;
+    button[17] = false;
+    button[18] = false;
+    button[19] = false;
+    button[20] = false;
+    button[21] = false;
+    button[22] = false;
     if (!button13AsFunction) button[13] = true;
     button13AsFunction = false;
   }
@@ -1286,7 +1302,7 @@ void CheckButton3Press(unsigned long currentMillis)
 {
   if (!buttonsMux[9])
   {
-    if (oldButton[17]) button[17] = false;
+    if (oldButton[14]) button[14] = false;
     if (oldButton[3]) button[3] = false;
     if (oldButtonMenu) buttonMenu = false;
   }
@@ -1318,7 +1334,7 @@ void CheckButton3Press(unsigned long currentMillis)
       if (!longPressTriggered)
       {
         if(button13OnHold){
-          button[17] = true;
+          button[14] = true;
         }else{
           button[3] = true;
         }
@@ -1567,7 +1583,7 @@ void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
             pos = 0;
         break;
         case 3: 
-            for (uint8_t i = 1; i <= 17; i++) {
+            for (uint8_t i = 1; i <= NUMBUTTONS; i++) {
               if (button[i]) {
                 // print tens digit only if >= 10
                 if (i >= 10) {
@@ -1623,7 +1639,7 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
         {
             pos = 0;
             memset(buf, 0, sizeof(buf)); //clear buf
-            for (uint8_t i = 1; i <= 17; i++) {
+            for (uint8_t i = 1; i <= NUMBUTTONS; i++) {
               if (button[i]) {
                 // print tens digit only if >= 10
                 if (i >= 10) {
@@ -1703,7 +1719,7 @@ void showSensors(int16_t diffTime, int16_t steeringPosition){
     char buf[32];
     uint8_t pos = 0;
     
-    for (uint8_t i = 1; i <= 17; i++) {
+    for (uint8_t i = 1; i <= NUMBUTTONS; i++) {
       if (button[i]) {
         // print tens digit only if >= 10
         if (i >= 10) {
@@ -1801,7 +1817,7 @@ int16_t ProcessDataAndApply(unsigned long currentMillis)
   }
   
   // BUTTONS
-  for (i = 1; i <= 17; i++){
+  for (i = 1; i <= NUMBUTTONS; i++){
      button[i] ? Joystick.pressButton(i-1) : Joystick.releaseButton(i-1);
   }
 

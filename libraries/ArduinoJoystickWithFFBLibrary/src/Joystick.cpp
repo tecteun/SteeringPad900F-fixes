@@ -208,7 +208,6 @@ Joystick_::Joystick_(
 		
 	}
 	
-	// this may have a bug?
 	if (_hatSwitchCount > 0) {
 
 		// USAGE (Hat Switch)

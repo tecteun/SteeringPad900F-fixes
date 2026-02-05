@@ -1142,6 +1142,8 @@ void DisplayMainScreen()
 
 void DisplayMenu(const __FlashStringHelper* label, uint8_t spaces)
 {
+  oled.setLetterSpacing(1);
+  
   oled.setRow(3);
   oled.setCol(0);
 
@@ -1631,6 +1633,7 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
     static uint8_t pos = 0;
     static char buf[32];
     static double diffTimeAvg = 0;
+    static byte fcount = 0;
 
     if(diffTimeAvg == 0)
       diffTimeAvg = diffTime;
@@ -1673,10 +1676,12 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
         }
         break;
         case 3:
-        {
+        { 
+            fcount++;
+            byte strober = min(20, abs((int8_t)61-(int8_t)out))/2; //abs distance to center, strobe more often when close to center
             bool centered = out >= 60 && out <= 62;
             oled.setLetterSpacing(0);
-            oled.setInvertMode(centered);
+            oled.setInvertMode(centered || (strober < 10 && !(fcount % strober)));
             oled.print(F("-----------   ------------"));
             oled.setCol(61-5);
             if (centered){
@@ -1703,7 +1708,6 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
         }
         break;
     }
-
     step++;
     if (step > 4) step = 0;
 }

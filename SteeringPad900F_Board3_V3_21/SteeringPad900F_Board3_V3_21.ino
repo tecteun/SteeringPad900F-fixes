@@ -431,6 +431,18 @@ void setup()
   // START DISPLAY ///////////////////////////////////////////////
   oled.begin(&Adafruit128x32, I2C_ADDRESS);
   oled.setFont(Stang5x7);
+
+  byte c = 25;
+  while (c-- > 0) {
+    for (byte page = 0; page < 4; page++) {
+      oled.setRow(page);
+      oled.setCol(0);
+      for (byte col = 0; col < 128; col++) {
+        oled.ssd1306WriteRam(random(0, 256));
+      }
+    }
+  }
+  
   DisplayMainScreen();
 
   // START JOYSTICK //////////////////////////////////////////////

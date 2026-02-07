@@ -1,8 +1,18 @@
   Unofficial SteeringPad900F firmware
 
+⚠️ note: for interrupt mode, an additional wire needs to be bodged
+
 This unofficial repo fixes a few issues with the 3.2 firmware found on https://www.printables.com/model/1223875-steering-pad-900-f/files
 
 - Filters some judder from the x axis sensor (applyDeadband())
+- improved force feedback
+- more stable
+- more buttons
+- updated UI
+- compatibility with BeamNG, snowrunner, assetto corsa
+- and more.. its nuts 🥜
+
+
 
   My thresholds:
 

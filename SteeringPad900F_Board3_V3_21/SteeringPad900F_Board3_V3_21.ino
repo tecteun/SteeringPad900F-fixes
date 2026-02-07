@@ -574,7 +574,7 @@ void loop() {
   // IN GAME MODE
   if (operationMode == 0)  
   {    
-    showSensorsSM(diffTime, steeringPosition);
+    //showSensorsSM(diffTime, steeringPosition);
     //delay(200); <-- test big blocker
     processAccelleratorPedal();
     processBreakPedal();
@@ -1137,7 +1137,7 @@ void DisplayMainScreen()
   oled.setInvertMode(false);
   oled.print(F(">")); /////////////////////////////
 
-  showSensorsLabels();
+  //showSensorsLabels();
 }
 
 void DisplayMenu(const __FlashStringHelper* label, uint8_t spaces)

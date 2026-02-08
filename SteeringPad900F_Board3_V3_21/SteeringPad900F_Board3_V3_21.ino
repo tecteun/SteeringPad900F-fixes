@@ -545,7 +545,7 @@ void loop() {
   if(!RDY){
     return;
   }
-  if(RDY && !sampleReady){
+  if(!ADS.isReady() && RDY && !sampleReady){ // isReady seems to be inverted in Continuous Mode https://github.com/RobTillaart/ADS1X15/issues/97
     byte lastRequest = ADS.lastRequest();
     
     adsValues[lastRequest] = ADS.getValue();
@@ -574,8 +574,20 @@ void loop() {
   // IN GAME MODE
   if (operationMode == 0)  
   {    
-    //showSensorsSM(diffTime, steeringPosition);
-    //delay(200); <-- test big blocker
+    showSensorsSM(diffTime, steeringPosition);
+    /*
+     * test big blocker
+     Joystick.getUSBPID();  // update FFB
+      Joystick.getUSBPID();  // update FFB
+       Joystick.getUSBPID();  // update FFB
+        Joystick.getUSBPID();  // update FFB
+         Joystick.getUSBPID();  // update FFB
+          Joystick.getUSBPID();  // update FFB
+           Joystick.getUSBPID();  // update FFB
+            Joystick.getUSBPID();  // update FFB
+    delay(200); 
+    */  
+    
     processAccelleratorPedal();
     processBreakPedal();
     diffTime = ProcessDataAndApply(currentMillis);

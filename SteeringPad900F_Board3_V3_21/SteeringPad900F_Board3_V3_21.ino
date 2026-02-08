@@ -473,19 +473,19 @@ void setup()
 
   // START FORCE FEEDBACK /////////////////////////////////////////
   // Timer3 for FFB
-  /*
+  
   cli();
   TCCR3A = 0;
   TCCR3B = 0;
   TCNT3 = 0;
-  //OCR3A = 399; // 5 kHz
-  OCR3A = 1999;  // 1 kHz (= equal to HID update rate)
+  OCR3A = 399; // 5 kHz
+  //OCR3A = 1999;  // 1 kHz (= equal to HID update rate)
   //OCR3A = 3999;  // 500 Hz
   TCCR3B |= (1 << WGM32);
   TCCR3B |= (1 << CS31);
   TIMSK3 |= (1 << OCIE3A);
   sei();
-  */
+  
   pinMode(motorPinDirection, OUTPUT);
   pinMode(motorPinPWM, OUTPUT);
   pinMode(motorPinEnable, OUTPUT);
@@ -569,7 +569,7 @@ void loop() {
   // 0 - In Game
   // 1 - In Menu
   // 2 - In Confirmation
-  Joystick.getUSBPID();  // update FFB
+  //Joystick.getUSBPID();  // update FFB
   ReadButtons(currentMillis);
   ReadAnalogSensors();
   // IN GAME MODE
@@ -1370,13 +1370,13 @@ void CheckButton3Press(unsigned long currentMillis)
 //  ██   ██ ██    ██  ██ ██      ██      ██    ██ ██  ██ ██ ██         ██    ██ ██    ██ ██  ██ ██      ██ 
 //  ██   ██  ██████  ██   ██     ██       ██████  ██   ████  ██████    ██    ██  ██████  ██   ████ ███████ 
 //
-/*
+
 // TIMER3 INTERRUPTION
 ISR(TIMER3_COMPA_vect)
 {
   Joystick.getUSBPID();  // update FFB
 }
-*/
+
 
 
 // EASE IN CALCULATION

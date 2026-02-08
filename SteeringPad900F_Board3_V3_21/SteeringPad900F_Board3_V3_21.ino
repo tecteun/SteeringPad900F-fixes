@@ -358,6 +358,7 @@ byte menuLevel = 0;
 byte oldMenuLevel = 0;
 byte lastMenuLevel = 1;
 bool reopenLevel = false;
+byte showSensorsStep = 0;
 
 //PEDALS
 byte brakePedalCalibrationStep = 0;
@@ -369,6 +370,7 @@ int16_t steeringPosition;
 int16_t brakeSensor;
 int16_t acceleratorSensor;
 byte steeringCalibrationStep = 0;
+
 
 // SYSTEM
 // Every for loop variable
@@ -637,6 +639,7 @@ void loop() {
 //  ██  ██  ██ ██      ██  ██ ██ ██    ██ 
 //  ██      ██ ███████ ██   ████  ██████  
 //
+
 void MenuOperations()
 {
 
@@ -825,7 +828,20 @@ void MenuOperations()
   //    \_____\__,_|_|_|_.__/|_|  \__,_|\__|_|\___/|_| |_|_____/ \__\___|\___|_|  |_|_| |_|\__, |
   //                                                                                        __/ |
   //                                                                                       |___/ 
-
+  
+  // static lambda helper (save some space)
+  static auto steeringCalibrationStepFunc = [](const __FlashStringHelper* title, const __FlashStringHelper* pre = NULL){
+    steeringSensorMapLUT[steeringCalibrationStep - 1] = steeringSensor;
+    steeringCalibrationStep++;
+    DisplayTitleCalibrate();
+    oled.println(F("Rotate to angle:"));
+    if(pre){
+      oled.println(pre);
+    }
+    oled.print(title);
+    DisplayValueText();
+  };
+  
   if (menuLevel == 5)
   {
     if (menuLevel != oldMenuLevel)
@@ -850,94 +866,43 @@ void MenuOperations()
         break;
         
         case 1:
-        steeringSensorMapLUT[steeringCalibrationStep - 1] = steeringSensor;
-        steeringCalibrationStep++;
-        DisplayTitleCalibrate();
-        DisplayRotateToAngle();
-        oled.print(F(" 90 deg"));
-        DisplayValueText();
+        steeringCalibrationStepFunc(F(" 90 deg"));
         break;
 
         case 2:
-        steeringSensorMapLUT[steeringCalibrationStep - 1] = steeringSensor;
-        steeringCalibrationStep++;
-        DisplayTitleCalibrate();
-        DisplayRotateToAngle();
-        oled.print(F("180 deg"));
-        DisplayValueText();
+        steeringCalibrationStepFunc(F("180 deg"));
         break;
         
         case 3:
-        steeringSensorMapLUT[steeringCalibrationStep - 1] = steeringSensor;
-        steeringCalibrationStep++;
-        DisplayTitleCalibrate();
-        DisplayRotateToAngle();
-        oled.print(F("270 deg"));
-        DisplayValueText();
+        steeringCalibrationStepFunc(F("270 deg"));
         break;
         
         case 4:
-        steeringSensorMapLUT[steeringCalibrationStep - 1] = steeringSensor;
-        steeringCalibrationStep++;
-        DisplayTitleCalibrate();
-        DisplayRotateToAngle();
-        oled.print(F("360 deg"));
-        DisplayValueText();
+        steeringCalibrationStepFunc(F("360 deg"));
         break;
         
         case 5:
-        steeringSensorMapLUT[steeringCalibrationStep - 1] = steeringSensor;
-        steeringCalibrationStep++;
-        DisplayTitleCalibrate();
-        oled.println(F("Center point    "));
-        oled.print(F("450 deg"));
-        DisplayValueText();
+        steeringCalibrationStepFunc(F("450 deg"), F("Center point    "));
         break;
         
         case 6:
-        steeringSensorMapLUT[steeringCalibrationStep - 1] = steeringSensor;
-        steeringCalibrationStep++;
-        DisplayTitleCalibrate();
-        DisplayRotateToAngle();
-        //CleanLine();
-        oled.print(F("540 deg"));
-        DisplayValueText();
+        steeringCalibrationStepFunc(F("540 deg"));
         break;
         
         case 7:
-        steeringSensorMapLUT[steeringCalibrationStep - 1] = steeringSensor;
-        steeringCalibrationStep++;
-        DisplayTitleCalibrate();
-        DisplayRotateToAngle();
-        oled.print(F("630 deg"));
-        DisplayValueText();
+        steeringCalibrationStepFunc(F("630 deg"));
         break;
         
         case 8:
-        steeringSensorMapLUT[steeringCalibrationStep - 1] = steeringSensor;
-        steeringCalibrationStep++;
-        DisplayTitleCalibrate();
-        DisplayRotateToAngle();
-        oled.print(F("720 deg"));
-        DisplayValueText();
+        steeringCalibrationStepFunc(F("720 deg"));
         break;
         
         case 9:
-        steeringSensorMapLUT[steeringCalibrationStep - 1] = steeringSensor;
-        steeringCalibrationStep++;
-        DisplayTitleCalibrate();
-        DisplayRotateToAngle();
-        oled.print(F("810 deg"));
-        DisplayValueText();
+        steeringCalibrationStepFunc(F("810 deg"));
         break;
         
         case 10:
-        steeringSensorMapLUT[steeringCalibrationStep - 1] = steeringSensor;
-        steeringCalibrationStep++;
-        DisplayTitleCalibrate();
-        DisplayRotateToAngle();
-        oled.print(F("900 deg"));
-        DisplayValueText();
+        steeringCalibrationStepFunc(F("900 deg"));
         break;
 
         case 11:
@@ -1146,10 +1111,7 @@ void DisplayTitleForceFeedback()   { DisplayTitle(F("FORCE FEEDBACK")); }
 void DisplayTitleShowSensorsActive()   { DisplayTitle(F("SHOW SENSORDATA")); }
 void DisplayTitlePedalCurve()      { DisplayTitle(F("PEDAL LINEARITY")); }
 
-void DisplayRotateToAngle()
-{
-  oled.println(F("Rotate to angle:"));
-}
+
 
 void DisplayValueText()
 {
@@ -1171,8 +1133,10 @@ void DisplayMainScreen()
   oled.setInvertMode(false);
   oled.print(F(">")); /////////////////////////////
 
-  if(showSensorsActive)
+  if(showSensorsActive){
+    showSensorsStep = 0;
     showSensorsLabels();
+  }
 }
 
 void DisplayMenu(const __FlashStringHelper* label, uint8_t spaces)
@@ -1601,9 +1565,7 @@ void showSensorsLabels(){
 
 void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
 {
-  
     const __FlashStringHelper* empty = F("  ");
-    static uint8_t step = 5;
     static uint8_t pos = 0;
     static char buf[32];
     static double diffTimeAvg = 0;
@@ -1613,7 +1575,7 @@ void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
     else
       diffTimeAvg = ((.8*diffTimeAvg) + (.2*diffTime));
 
-    switch (step)
+    switch (showSensorsStep)
     {
         case 0: // forces + steering (row 1)
             oled.setRow(1); oled.setCol(25);
@@ -1656,15 +1618,14 @@ void showSensorsSM2(int16_t diffTime, int16_t steeringPosition)
         break;
     }
 
-  step++;
-  if (step > 5) step = 0;
+  showSensorsStep++;
+  if (showSensorsStep > 5) showSensorsStep = 0;
 }
 
 void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
 {
     uint16_t out = map((steeringPosition >> 9)+64, 0, 127, 0, 122);
     const __FlashStringHelper* empty = F("  ");
-    static uint8_t step = 4;
     static uint8_t pos = 0;
     static char buf[32];
     static double diffTimeAvg = 0;
@@ -1675,7 +1636,7 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
     else
       diffTimeAvg = ((.8*diffTimeAvg) + (.2*diffTime));
 
-    switch (step)
+    switch (showSensorsStep)
     {
         case 0:
         {
@@ -1743,8 +1704,8 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
         }
         break;
     }
-    step++;
-    if (step > 4) step = 0;
+    showSensorsStep++;
+    if (showSensorsStep > 4) showSensorsStep = 0;
 }
 
 

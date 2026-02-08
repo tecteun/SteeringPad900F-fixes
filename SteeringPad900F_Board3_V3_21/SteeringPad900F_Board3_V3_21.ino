@@ -251,11 +251,12 @@ int forceGain = 100;
 bool forceActive = true;
 
 // OPTIONAL INTERRUPT HANDLING ON ALERT/RDY PIN
-volatile bool adsPause = false; // option to pause conversions when doing heavy stuff
 volatile bool RDY = false; // option to pause conversions when doing heavy stuff
 
+bool showSensorsActive = true;
+
 #if ADS_INTERRUPT_PIN_0_ENABLED
-volatile int16_t adsValues[4] = { 0, 0, 0, 0 };
+volatile int16_t adsValues[3] = { 0, 0, 0 };
 // try sampling at 820SPS
 void adsReady()
 {
@@ -302,15 +303,15 @@ const int16_t joystickMin = -32767;
 const int16_t joystickMax = 32767;
 
 // FORCE FEEDBACK
-  Gains gains[1];
-  EffectParams params[1];
+Gains gains[1];
+EffectParams params[1];
 
-  #define motorPinDirection 8
-  #define motorPinPWM 9
-  #define motorPinEnable 10
+#define motorPinDirection 8
+#define motorPinPWM 9
+#define motorPinEnable 10
 
 // MENU
-byte menuLength = 7;
+byte menuLength = 8;
 
 
 
@@ -439,8 +440,6 @@ void setup()
       }
     }
   }
-  
-  DisplayMainScreen();
 
   // START JOYSTICK //////////////////////////////////////////////
   Joystick.begin(false); // <- no autoupdate, end of mainloop does this
@@ -495,11 +494,14 @@ void setup()
   menuLevel = 0;
   operationMode = 0;
 
+  DisplayMainScreen();
+
   delay(100);
 
   #if ADS_INTERRUPT_PIN_0_ENABLED
   ADS.requestADC(0);   //  start the interrupts, sample channel 0
   #endif
+
 }
 
 
@@ -571,7 +573,8 @@ void loop() {
   // IN GAME MODE
   if (operationMode == 0)  
   {    
-    showSensorsSM(diffTime, steeringPosition);
+    if(showSensorsActive)
+      showSensorsSM(diffTime, steeringPosition);
     /*
      * test big blocker
      Joystick.getUSBPID();  // update FFB
@@ -1077,6 +1080,24 @@ void MenuOperations()
       DisplayMenuSet();
     }
   }
+  // SHOWSENSORS ACTIVE
+  if (menuLevel == 8)
+  {
+    if (menuLevel != oldMenuLevel)
+    {
+      oled.clear();
+    }
+    DisplayTitleShowSensorsActive();
+    oled.print(F("Active: "));
+    if (!showSensorsActive) { oled.print(F("No")); }
+    else { oled.print(F("Yes")); }
+    CleanLine();
+    DisplayMenuChange();
+    if (button[5] && !oldButton[5])  // SET NEW VALUE
+    {
+      showSensorsActive = !showSensorsActive;
+    }
+  }
 
   if (reopenLevel)
   {
@@ -1090,6 +1111,9 @@ void MenuOperations()
 
   delay(2);
 }
+
+
+
 
 //  ██████  ██ ███████ ██████  ██       █████  ██    ██ 
 //  ██   ██ ██ ██      ██   ██ ██      ██   ██  ██  ██  
@@ -1119,6 +1143,7 @@ void DisplayTitle(const __FlashStringHelper* title)
 void DisplayTitleCalibration()     { DisplayTitle(F("CALIBRATION")); }
 void DisplayTitleCalibrate()       { DisplayTitle(F("CALIBRATE STEERING")); }
 void DisplayTitleForceFeedback()   { DisplayTitle(F("FORCE FEEDBACK")); }
+void DisplayTitleShowSensorsActive()   { DisplayTitle(F("SHOW SENSORDATA")); }
 void DisplayTitlePedalCurve()      { DisplayTitle(F("PEDAL LINEARITY")); }
 
 void DisplayRotateToAngle()
@@ -1146,7 +1171,8 @@ void DisplayMainScreen()
   oled.setInvertMode(false);
   oled.print(F(">")); /////////////////////////////
 
-  showSensorsLabels();
+  if(showSensorsActive)
+    showSensorsLabels();
 }
 
 void DisplayMenu(const __FlashStringHelper* label, uint8_t spaces)
@@ -1934,6 +1960,9 @@ void StoreData()
   // Store Easing Modes as one byte each
   eeprom_update_byte((uint8_t*)33, (uint8_t) brakeEase);
   eeprom_update_byte((uint8_t*)34, (uint8_t) acceleratorEase);
+
+  // Sensordata active
+  eeprom_update_byte((uint8_t*)35, showSensorsActive);
 }
 
 void ReadData()
@@ -1967,4 +1996,7 @@ void ReadData()
   
   temp = eeprom_read_byte((uint8_t*)34);
   acceleratorEase = static_cast<EasingMode>(temp);
+
+  // Sensordata active
+  showSensorsActive = eeprom_read_byte((uint8_t*)35);
 }

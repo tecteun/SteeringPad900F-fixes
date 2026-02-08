@@ -280,7 +280,7 @@ RDY = true;
 
 
 // BUTTONS
-const int errorMargin = 7; // Adjustable error margin for reading the buttons
+const int errorMargin = 4; // Adjustable error margin for reading the buttons
 
 const int thresholds[7] = 
 {
@@ -294,9 +294,6 @@ const int thresholds[7] =
 }; 
 
 const unsigned long LONG_PRESS_THRESHOLD = 1000;  // 1 second
-
-// DISPLAY
-const int DISPLAY_WIDTH = 16;
 
 // EEPROM
 
@@ -547,7 +544,7 @@ void loop() {
   }
   if(!ADS.isReady() && RDY && !sampleReady){ // isReady seems to be inverted in Continuous Mode https://github.com/RobTillaart/ADS1X15/issues/97
     byte lastRequest = ADS.lastRequest();
-    
+    delayMicroseconds(8);
     adsValues[lastRequest] = ADS.getValue();
     lastRequest++; //prepare to sample next channel
     if(lastRequest > 2){ 
@@ -1149,7 +1146,7 @@ void DisplayMainScreen()
   oled.setInvertMode(false);
   oled.print(F(">")); /////////////////////////////
 
-  //showSensorsLabels();
+  showSensorsLabels();
 }
 
 void DisplayMenu(const __FlashStringHelper* label, uint8_t spaces)

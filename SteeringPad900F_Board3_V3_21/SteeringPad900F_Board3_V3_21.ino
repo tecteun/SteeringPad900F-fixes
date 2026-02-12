@@ -1,4 +1,8 @@
 /*
+ * this is the old way of spoofing, included usb_rename.cpp to do this. see code below, no boards.txt has to be overwritten.
+ * 
+ * -------------------------------------
+ * 
  * spoofing the USB VID/PID to a real logitech steering wheel, fixes detection in, for example, snowrunner.
  * lsusb Bus 001 Device 002: ID 046d:c24f Logitech, Inc. G29 Driving Force Racing Wheel [PS3] 
  * lsusb Bus 001 Device 002: ID VID:PID Vendor-name, Product-name
@@ -11,6 +15,7 @@
  * add below board to boards.txt
  * on windows this is found at
  * C:\Users\%USERNAME%\AppData\Local\Arduino15\packages\arduino\hardware\avr\boards.txt
+ * 
  * 
 
 ##############################################################
@@ -141,6 +146,8 @@ mmicro.build.extra_flags={build.usb_flags}
 //  ██ ██  ██ ██ ██      ██      ██    ██      ██ ██ ██    ██ ██  ██ ██      ██ 
 //  ██ ██   ████  ██████ ███████  ██████  ███████ ██  ██████  ██   ████ ███████ 
 
+#define CDC_DISABLED
+#include "src/usb_rename.h"
 #include "avdweb_AnalogReadFast.h"
 
 // ADC
@@ -408,6 +415,25 @@ void setup()
 
   pinMode(4, INPUT_PULLUP);
   pinMode(7, INPUT_PULLUP);
+
+  // set different usb id if blinker button pressed
+  if(!digitalRead(4) || !digitalRead(7)){
+     USBRename dummy = USBRename(
+        "Steering Pad 900-F (g29 mode)",
+        "tecteun",
+        "1337-g29",
+        0x046d,   // VID
+        0xc24f    // PID Logitech G29
+    );
+  }else{
+    USBRename dummy = USBRename(
+        "Steering Pad 900-F",
+        "tecteun",
+        "1337",
+        0x046d,   // VID
+        0x0000    // PID
+    );
+  }
 
   // START ADC ///////////////////////////////////////////////////
   ADS.begin();

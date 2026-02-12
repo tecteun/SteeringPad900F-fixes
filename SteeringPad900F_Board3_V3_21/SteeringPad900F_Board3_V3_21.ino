@@ -418,6 +418,8 @@ void setup()
   pinMode(7, INPUT_PULLUP);
 
   // set different usb id if blinker button pressed
+  // todo MisterFPGA compatibility
+  // @see http://github.com/MiSTer-devel/Main_MiSTer/blob/5ea051dcea8e29ef9a61e4b732c004e724a30aa4/input.cpp#L4709
   if(!digitalRead(4) || !digitalRead(7)){
      USBRename dummy = USBRename(
         "Steering Pad 900-F (g29 mode)",

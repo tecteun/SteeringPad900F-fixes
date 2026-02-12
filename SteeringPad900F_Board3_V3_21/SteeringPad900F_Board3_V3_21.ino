@@ -421,9 +421,9 @@ void setup()
      USBRename dummy = USBRename(
         "Steering Pad 900-F (g29 mode)",
         "tecteun",
-        "1337-g29",
+        "1337-DFGT",
         0x046d,   // VID
-        0xc24f    // PID Logitech G29
+        0xc29a    // PID Logitech DFGT
     );
   }else{
     USBRename dummy = USBRename(

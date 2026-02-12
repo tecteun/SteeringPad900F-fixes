@@ -1,5 +1,6 @@
 /*
  * this is the old way of spoofing, included usb_rename.cpp to do this. see code below, no boards.txt has to be overwritten.
+ * TODO: enable CDC_DISABLED dynamically (if needed at all, needs more investigation)
  * 
  * -------------------------------------
  * 

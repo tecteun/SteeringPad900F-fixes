@@ -42,147 +42,163 @@ static const uint8_t pidReportDescriptor[] PROGMEM= {
 
   //================================OutputReport======================================//
 
-  // SetEffectReport (Windows + Linux compatible)
-0x09, 0x21,           // Usage (Set Effect Report)
-0xA1, 0x02,           // Collection Datalink (Logical)
-  0x85, 0x01,         //   Report ID 1
+	// ===============================
+	// SetEffectReport (Windows + Linux compatible)
+	// ===============================
+	0x09, 0x21,                 // Usage (0x21 = Set Effect Report)
+	0xA1, 0x02,                 // Collection (Logical)
+	  0x85, 0x01,               //   Report ID = 1 (Windows primary PID report)
 
-  // -------------------------------
-  // 0x22 Effect Block Index (Linux #1)
-  // -------------------------------
-  0x09, 0x22,
-  0x15, 0x01,
-  0x25, 0x28,
-  0x75, 0x08,
-  0x95, 0x01,
-  0x91, 0x02,
+	  // ============================================================
+	  // LINUX FIELD #1 — Effect Block Index (0x22)
+	  // Must be FIRST in the report for Linux PIDFF
+	  // ============================================================
+	  0x09, 0x22,               //   Usage (Effect Block Index)
+	  0x15, 0x01,               //   Logical Minimum = 1
+	  0x25, 0x28,               //   Logical Maximum = 40 (change to 0x0E for 14 effects)
+	  0x75, 0x08,               //   Report Size = 8 bits
+	  0x95, 0x01,               //   Report Count = 1
+	  0x91, 0x02,               //   Output (Data,Var,Abs)
 
-  // Windows-only Effect Type block
-  0x09, 0x25,
-  0xA1, 0x02,
-    0x09, 0x26,
-    0x09, 0x27,
-    0x09, 0x30,
-    0x09, 0x31,
-    0x09, 0x32,
-    0x09, 0x33,
-    0x09, 0x34,
-    0x09, 0x40,
-    0x09, 0x41,
-    0x09, 0x42,
-    0x09, 0x43,
-    0x09, 0x28,      // Custom Force Data
-    // (removed duplicate 0x28)
-    0x15, 0x01,
-    0x25, 0x0C,
-    0x75, 0x08,
-    0x95, 0x01,
-    0x91, 0x00,
-  0xC0,
+	  // ============================================================
+	  // WINDOWS-ONLY — Effect Type block (Linux ignores this)
+	  // ============================================================
+	  0x09, 0x25,               //   Usage (Effect Type)
+	  0xA1, 0x02,               //   Collection (Logical)
+		0x09, 0x26,             //     Usage (Constant Force)
+		0x09, 0x27,             //     Usage (Ramp)
+		0x09, 0x30,             //     Usage (Square)
+		0x09, 0x31,             //     Usage (Sine)
+		0x09, 0x32,             //     Usage (Triangle)
+		0x09, 0x33,             //     Usage (Sawtooth Up)
+		0x09, 0x34,             //     Usage (Sawtooth Down)
+		0x09, 0x40,             //     Usage (Spring)
+		0x09, 0x41,             //     Usage (Damper)
+		0x09, 0x42,             //     Usage (Inertia)
+		0x09, 0x43,             //     Usage (Friction)
+		0x09, 0x28,             //     Usage (Custom Force Data)
+		// (duplicate 0x28 removed)
+		0x15, 0x01,             //     Logical Minimum = 1
+		0x25, 0x0C,             //     Logical Maximum = 12
+		0x75, 0x08,             //     Report Size = 8 bits
+		0x95, 0x01,             //     Report Count = 1
+		0x91, 0x00,             //     Output (Data,Array)
+	  0xC0,                     //   End Collection (Effect Type)
 
-  // -------------------------------
-  // 0x50 Duration (Linux #2)
-  // 0x54 Trigger Repeat Interval (Linux #4)
-  // 0x51 Sample Period (Windows only)
-  // -------------------------------
-  0x09, 0x50,
-  0x09, 0x54,
-  0x09, 0x51,
-  0x15, 0x00,
-  0x26, 0xFF, 0x7F,
-  0x75, 0x10,
-  0x95, 0x03,
-  0x91, 0x02,
+	  // ============================================================
+	  // LINUX FIELD #2 — Duration (0x50)
+	  // LINUX FIELD #4 — Trigger Repeat Interval (0x54)
+	  // WINDOWS-ONLY — Sample Period (0x51)
+	  // ============================================================
+	  0x09, 0x50,               //   Usage (Duration)
+	  0x09, 0x54,               //   Usage (Trigger Repeat Interval)
+	  0x09, 0x51,               //   Usage (Sample Period) — Windows only
+	  0x15, 0x00,               //   Logical Minimum = 0
+	  0x26, 0xFF, 0x7F,         //   Logical Maximum = 32767
+	  0x75, 0x10,               //   Report Size = 16 bits
+	  0x95, 0x03,               //   Report Count = 3 fields (Duration, Repeat, Sample)
+	  0x91, 0x02,               //   Output (Data,Var,Abs)
 
-  // -------------------------------
-  // 0x52 Gain (Linux optional)
-  // 0x53 Trigger Button (Windows)
-  // -------------------------------
-  0x09, 0x52,          // Linux optional PID_GAIN
-  0x15, 0x00,
-  0x26, 0xFF, 0x00,
-  0x75, 0x08,
-  0x95, 0x01,
-  0x91, 0x02,
+	  // ============================================================
+	  // LINUX OPTIONAL FIELD — Gain (0x52)
+	  // ============================================================
+	  0x09, 0x52,               //   Usage (Gain) — Linux optional PID_GAIN
+	  0x15, 0x00,               //   Logical Minimum = 0
+	  0x26, 0xFF, 0x00,         //   Logical Maximum = 255
+	  0x75, 0x08,               //   Report Size = 8 bits
+	  0x95, 0x01,               //   Report Count = 1
+	  0x91, 0x02,               //   Output (Data,Var,Abs)
 
-  // -------------------------------
-  // 0x53 Gain (Linux #3)
-  // -------------------------------
-  0x09, 0x53,
-  0x15, 0x00,
-  0x26, 0xFF, 0x00,
-  0x75, 0x08,
-  0x95, 0x01,
-  0x91, 0x02,
+	  // ============================================================
+	  // LINUX FIELD #3 — Gain (0x53)
+	  // ============================================================
+	  0x09, 0x53,               //   Usage (Gain)
+	  0x15, 0x00,               //   Logical Minimum = 0
+	  0x26, 0xFF, 0x00,         //   Logical Maximum = 255
+	  0x75, 0x08,               //   Report Size = 8 bits
+	  0x95, 0x01,               //   Report Count = 1
+	  0x91, 0x02,               //   Output (Data,Var,Abs)
 
-  // Windows-only Trigger Button
-  0x09, 0x53,
-  0x15, 0x01,
-  0x25, 0x08,
-  0x75, 0x08,
-  0x95, 0x01,
-  0x91, 0x02,
+	  // ============================================================
+	  // WINDOWS-ONLY — Trigger Button (0x53)
+	  // ============================================================
+	  0x09, 0x53,               //   Usage (Trigger Button)
+	  0x15, 0x01,               //   Logical Minimum = 1
+	  0x25, 0x08,               //   Logical Maximum = 8
+	  0x75, 0x08,               //   Report Size = 8 bits
+	  0x95, 0x01,               //   Report Count = 1
+	  0x91, 0x02,               //   Output (Data,Var,Abs)
 
-  // Windows Axes Enable block
-  0x09, 0x55,
-  0xA1, 0x02,
-    0x05, 0x01,
-    0x09, 0x30,
-    0x09, 0x31,
-    0x15, 0x00,
-    0x25, 0x01,
-    0x75, 0x01,
-    0x95, 0x02,
-    0x91, 0x02,
-    0x95, 0x06,      // padding to byte
-    0x91, 0x03,
-  0xC0,
+	  // ============================================================
+	  // WINDOWS-ONLY — Axes Enable block (0x55)
+	  // Linux ignores this entire collection
+	  // ============================================================
+	  0x09, 0x55,               //   Usage (Axes Enable)
+	  0xA1, 0x02,               //   Collection (Logical)
+		0x05, 0x01,             //     Usage Page (Generic Desktop)
+		0x09, 0x30,             //     Usage (X)
+		0x09, 0x31,             //     Usage (Y)
+		0x15, 0x00,             //     Logical Minimum = 0
+		0x25, 0x01,             //     Logical Maximum = 1
+		0x75, 0x01,             //     Report Size = 1 bit
+		0x95, 0x02,             //     Report Count = 2 bits (X,Y)
+		0x91, 0x02,             //     Output (Data,Var,Abs)
+		0x95, 0x06,             //     Padding = 6 bits
+		0x91, 0x03,             //     Output (Const,Var,Abs)
+	  0xC0,                     //   End Collection (Axes Enable)
 
-  // -------------------------------
-  // 0x56 Direction Enable (Linux #5)
-  // -------------------------------
-  0x05, 0x0F,
-  0x09, 0x56,
-  0x15, 0x00,
-  0x25, 0x01,
-  0x75, 0x01,
-  0x95, 0x01,
-  0x91, 0x02,
-  0x95, 0x07,        // padding to byte
-  0x91, 0x03,
+	  // ============================================================
+	  // LINUX FIELD #5 — Direction Enable (0x56)
+	  // ============================================================
+	  0x05, 0x0F,               //   Usage Page (Physical Interface)
+	  0x09, 0x56,               //   Usage (Direction Enable)
+	  0x15, 0x00,               //   Logical Minimum = 0
+	  0x25, 0x01,               //   Logical Maximum = 1
+	  0x75, 0x01,               //   Report Size = 1 bit
+	  0x95, 0x01,               //   Report Count = 1 bit
+	  0x91, 0x02,               //   Output (Data,Var,Abs)
+	  0x95, 0x07,               //   Padding = 7 bits → byte aligned
+	  0x91, 0x03,               //   Output (Const,Var,Abs)
 
-  // Windows-only Direction block
-  0x09, 0x57,
-  0xA1, 0x02,
-    0x0B, 0x01, 0, 0x0A, 0,
-    0x0B, 0x02, 0, 0x0A, 0,
-    0x75, 0x08,
-    0x95, 0x02,
-    0x91, 0x02,
-  0xC0,
+	  // ============================================================
+	  // WINDOWS-ONLY — Direction block (0x57)
+	  // Linux ignores this
+	  // ============================================================
+	  0x09, 0x57,               //   Usage (Direction)
+	  0xA1, 0x02,               //   Collection (Logical)
+		0x0B, 0x01, 0, 0x0A, 0, //     Usage (Ordinal 1)
+		0x0B, 0x02, 0, 0x0A, 0, //     Usage (Ordinal 2)
+		0x75, 0x08,             //     Report Size = 8 bits
+		0x95, 0x02,             //     Report Count = 2 bytes
+		0x91, 0x02,             //     Output (Data,Var,Abs)
+	  0xC0,                     //   End Collection (Direction)
 
-  // Windows-only Type Specific Block Offset
-  0x09, 0x58,
-  0xA1, 0x02,
-    0x0B, 0x01, 0, 0x0A, 0,
-    0x0B, 0x02, 0, 0x0A, 0,
-    0x26, 0xFD, 0x7F,
-    0x75, 0x10,
-    0x95, 0x02,
-    0x91, 0x02,
-  0xC0,
+	  // ============================================================
+	  // WINDOWS-ONLY — Type Specific Block Offset (0x58)
+	  // Linux ignores this
+	  // ============================================================
+	  0x09, 0x58,               //   Usage (Type Specific Block Offset)
+	  0xA1, 0x02,               //   Collection (Logical)
+		0x0B, 0x01, 0, 0x0A, 0, //     Usage (Ordinal 1)
+		0x0B, 0x02, 0, 0x0A, 0, //     Usage (Ordinal 2)
+		0x26, 0xFD, 0x7F,       //     Logical Maximum = 32765
+		0x75, 0x10,             //     Report Size = 16 bits
+		0x95, 0x02,             //     Report Count = 2
+		0x91, 0x02,             //     Output (Data,Var,Abs)
+	  0xC0,                     //   End Collection (TSBO)
 
-  // -------------------------------
-  // 0xA7 Start Delay (Linux #6)
-  // -------------------------------
-  0x09, 0xA7,
-  0x15, 0x00,
-  0x26, 0xFF, 0x7F,
-  0x75, 0x10,
-  0x95, 0x01,
-  0x91, 0x02,
+	  // ============================================================
+	  // LINUX FIELD #6 — Start Delay (0xA7)
+	  // ============================================================
+	  0x09, 0xA7,               //   Usage (Start Delay)
+	  0x15, 0x00,               //   Logical Minimum = 0
+	  0x26, 0xFF, 0x7F,         //   Logical Maximum = 32767
+	  0x75, 0x10,               //   Report Size = 16 bits
+	  0x95, 0x01,               //   Report Count = 1
+	  0x91, 0x02,               //   Output (Data,Var,Abs)
 
-0xC0,
+	0xC0,                       // End Collection (Set Effect Report)
+
 
   // SetEnvelopeReport
   0x09, 0x5A,           //Usage (Set Envelope Report)

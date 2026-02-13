@@ -465,8 +465,6 @@ void setup()
 
   // intro animation
   // use timer1 for some pseudo random noise
-  TCCR1A = 0; 
-  TCCR1B = (1 << CS10); // no prescaler
   byte c = 25;
   while (c-- > 0) {
     for (byte page = 0; page < 4; page++) {
@@ -477,7 +475,6 @@ void setup()
       }
     }
   }
-  TCCR1B = 0;
  /*
   byte c = 25;
   while (c-- > 0) {

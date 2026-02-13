@@ -20,6 +20,11 @@
  * sketch folder
  * C:\Users\%USERNAME%\AppData\Local\Temp\arduino\sketches\
  * 
+ * size reporting
+ * C:\Users\%USERNAME%\AppData\Local\Arduino15\packages\arduino\hardware\avr\1.8.7\platform.txt
+ * compiler.nm.cmd=avr-nm
+ * recipe.hooks.linking.postlink.1.pattern="{compiler.path}{compiler.nm.cmd}" --size-sort --print-size -r "{build.path}/{build.project_name}.elf"
+ * 
 
 ##############################################################
 
@@ -183,6 +188,18 @@ SSD1306AsciiAceWire<WireInterface> oled(wireInterface);
 
 #define NUMBUTTONS 22
 
+bool altMode = false;
+struct EarlyInit {
+    EarlyInit() {
+        // code that runs before setup()
+        pinMode(4, INPUT_PULLUP);
+        pinMode(7, INPUT_PULLUP);
+        if(!digitalRead(4) || !digitalRead(7)){
+          altMode = true;
+        }
+    }
+} earlyInit;
+
 Joystick_ Joystick(
   JOYSTICK_DEFAULT_REPORT_ID,
   JOYSTICK_TYPE_JOYSTICK,
@@ -190,10 +207,10 @@ Joystick_ Joystick(
   0,      // Hats (Max 2) - seems to be needed to be detected in FH4 ( > 0 makes it crash in beamNG because _hidReportSize too big?)
   true,   // X Axis
   true,   // Y Axis
-  false,  // Z Axis
+  !altMode,  // Z Axis
   false,  // X Rotation
   false,  // Y Rotation
-  true,   // Z Rotation
+  altMode,   // Z Rotation
   false,  // Rudder
   false,  // Throttle
   false,  // Accelerator
@@ -339,8 +356,6 @@ byte menuLength = 8;
 //    ████   ██   ██ ██   ██ ██ ██   ██ ██████  ███████ ███████ ███████ 
 //   
 
-
-
 // BUTTONS
 int sensorValues[4];
 bool buttonsMux[15] = {false};
@@ -416,15 +431,16 @@ void setup()
   pinMode(A2, INPUT_PULLUP);
   pinMode(A3, INPUT_PULLUP);
 
-  pinMode(4, INPUT_PULLUP);
-  pinMode(7, INPUT_PULLUP);
+  //already done in earlyInit
+  //pinMode(4, INPUT_PULLUP);
+  //pinMode(7, INPUT_PULLUP);
 
   // set different usb id if blinker button pressed
   // todo MisterFPGA compatibility
   // @see http://github.com/MiSTer-devel/Main_MiSTer/blob/5ea051dcea8e29ef9a61e4b732c004e724a30aa4/input.cpp#L4709
   // @see https://github.com/MiSTer-devel/Main_MiSTer/blob/5ea051dcea8e29ef9a61e4b732c004e724a30aa4/input.cpp#L4695
   // T300RS uses axis 5 (rZ) for throttle
-  if(!digitalRead(4) || !digitalRead(7)){
+  if(altMode){
      //0x2341 arduino id //27926
      USBRename dummy = USBRename(
         "Steering Pad 900-F (T300RS mode)",
@@ -433,7 +449,6 @@ void setup()
         0x044f,   // VID
         0xb66e    // PID T300RS Racing Wheel (PC/PS3)
     );
-    
   }else{
     USBRename dummy = USBRename(
         "Steering Pad 900-F",
@@ -467,6 +482,7 @@ void setup()
   oled.begin(&Adafruit128x32, I2C_ADDRESS);
   oled.setFont(Stang5x7);
 
+/*
   byte c = 25;
   while (c-- > 0) {
     for (byte page = 0; page < 4; page++) {
@@ -477,14 +493,31 @@ void setup()
       }
     }
   }
+ */
+  byte c = 25;
+  while (c-- > 0) {
+    for (byte page = 0; page < 4; page++) {
+      oled.setRow(page);
+      oled.setCol(0);
+  
+      for (byte col = 0; col < 128; col++) {
+        float v = sin((col + c) * col/page);   // smooth wave
+        uint8_t b = (v > 0) ? 0xFF : 0x00; // binary ON/OFF
+        oled.ssd1306WriteRam(b);
+      }
+    }
+  }
+
 
   // START JOYSTICK //////////////////////////////////////////////
   Joystick.begin(false); // <- no autoupdate, end of mainloop does this
   Joystick.setXAxisRange(joystickMin, joystickMax);
   Joystick.setYAxisRange(joystickMin, joystickMax);
-  Joystick.setRzAxisRange(joystickMin, joystickMax);
-  //Joystick.setZAxisRange(joystickMin, joystickMax);
-  
+  if(altMode){
+    Joystick.setRzAxisRange(joystickMin, joystickMax);
+  }else{
+    Joystick.setZAxisRange(joystickMin, joystickMax);
+  }
   gains[0].totalGain = forceGain;
   //gains[0].constantGain      = 100;
 	//gains[0].rampGain          = 0;
@@ -1170,6 +1203,9 @@ void DisplayMainScreen()
   oled.setRow(0); oled.setCol(0);
   oled.setLetterSpacing(0);
   oled.print(F("STEERING PAD 900-F")); ////////////////////////////
+  if(altMode){
+    oled.print(F(" (ALT)"));
+  }
   oled.setLetterSpacing(1);
   oled.setRow(3); oled.setCol(0);
   oled.print(F("         hold ")); /////////////////////////////
@@ -1835,9 +1871,11 @@ void processAccelleratorPedal(){
       acceleratorFinalValue = EaseOut(acceleratorSensor, acceleratorSensorMin, acceleratorSensorMax, joystickMin, joystickMax);
       break;
   }
-  
-  Joystick.setRzAxis(acceleratorFinalValue);
-  //Joystick.setZAxis(acceleratorFinalValue);
+  if(altMode){
+    Joystick.setRzAxis(acceleratorFinalValue);
+  }else{
+    Joystick.setZAxis(acceleratorFinalValue);
+  }
 }
 
 // SEND DATA TO JOYSTICK

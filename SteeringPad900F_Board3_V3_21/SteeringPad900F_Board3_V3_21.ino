@@ -188,10 +188,10 @@ Joystick_ Joystick(
   0,      // Hats (Max 2) - seems to be needed to be detected in FH4 ( > 0 makes it crash in beamNG because _hidReportSize too big?)
   true,   // X Axis
   true,   // Y Axis
-  true,   // Z Axis
+  false,  // Z Axis
   false,  // X Rotation
   false,  // Y Rotation
-  false,  // Z Rotation
+  true,   // Z Rotation
   false,  // Rudder
   false,  // Throttle
   false,  // Accelerator
@@ -420,21 +420,26 @@ void setup()
   // set different usb id if blinker button pressed
   // todo MisterFPGA compatibility
   // @see http://github.com/MiSTer-devel/Main_MiSTer/blob/5ea051dcea8e29ef9a61e4b732c004e724a30aa4/input.cpp#L4709
+  // @see https://github.com/MiSTer-devel/Main_MiSTer/blob/5ea051dcea8e29ef9a61e4b732c004e724a30aa4/input.cpp#L4695
+  // T300RS uses axis 5 (rZ) for throttle
   if(!digitalRead(4) || !digitalRead(7)){
+     //0x2341 arduino id //27926
+     
      USBRename dummy = USBRename(
-        "Steering Pad 900-F (g29 mode)",
-        "tecteun",
-        "1337-DFGT",
-        0x046d,   // VID
-        0xc29a    // PID Logitech DFGT
+        "Steering Pad 900-F (T300RS mode)",
+        "Thrustmaster",
+        "1337-T300RS",
+        0x044f,   // VID
+        0xb66e    // PID T300RS Racing Wheel (PC/PS3)
     );
+    
   }else{
     USBRename dummy = USBRename(
         "Steering Pad 900-F",
         "tecteun",
         "1337",
-        0x046d,   // VID
-        0x0000    // PID
+        0x046d,   // VID (Logitech)
+        0x0000    // PID (undef)
     );
   }
 
@@ -476,7 +481,8 @@ void setup()
   Joystick.begin(false); // <- no autoupdate, end of mainloop does this
   Joystick.setXAxisRange(joystickMin, joystickMax);
   Joystick.setYAxisRange(joystickMin, joystickMax);
-  Joystick.setZAxisRange(joystickMin, joystickMax);
+  Joystick.setRzAxisRange(joystickMin, joystickMax);
+  //Joystick.setZAxisRange(joystickMin, joystickMax);
   
   gains[0].totalGain = forceGain;
   //gains[0].constantGain      = 100;
@@ -1819,8 +1825,9 @@ void processAccelleratorPedal(){
       acceleratorFinalValue = EaseOut(acceleratorSensor, acceleratorSensorMin, acceleratorSensorMax, joystickMin, joystickMax);
       break;
   }
-
-  Joystick.setZAxis(acceleratorFinalValue);
+  
+  Joystick.setRzAxis(acceleratorFinalValue);
+  //Joystick.setZAxis(acceleratorFinalValue);
 }
 
 // SEND DATA TO JOYSTICK

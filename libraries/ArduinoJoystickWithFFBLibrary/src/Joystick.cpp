@@ -305,7 +305,18 @@ Joystick_::Joystick_(
 		} // One or Two Hat Switches?
 
 	} // Hat Switches
+/*
 
+	AxisIndex	Function	HID Usage
+	0			X			0x30
+	1			Y			0x31
+	2			Clutch		0x32
+	3–5			dummy axes	0x33–0x35
+	6			Accel		0x36
+	7–9			dummy axes	0x37–0x39
+	10			Brake		0x3A
+
+*/
 	if (axisCount > 0) {
 	
 		// USAGE (Pointer)
@@ -345,7 +356,7 @@ Joystick_::Joystick_(
 		if (includeYAxis == true) {
 			// USAGE (Y)
 			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x09;
-			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x31;
+			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x31; //Brake axis index 1 
 		}
 		
 		if (includeZAxis == true) {
@@ -369,7 +380,7 @@ Joystick_::Joystick_(
 		if (includeRzAxis == true) {
 			// USAGE (Rz)
 			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x09;
-			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x35;
+			tempHidReportDescriptor[hidReportDescriptorSize++] = 0x35;  //Accel axis index 5
 		}
 		
 		// INPUT (Data,Var,Abs)
@@ -1004,8 +1015,9 @@ void Joystick_::sendState()
 	/*
 	index += buildAndSetAxisValue(_includeAxisFlags & JOYSTICK_INCLUDE_RX_AXIS, _xAxisRotation, _rxAxisMinimum, _rxAxisMaximum, &(data[index]));
 	index += buildAndSetAxisValue(_includeAxisFlags & JOYSTICK_INCLUDE_RY_AXIS, _yAxisRotation, _ryAxisMinimum, _ryAxisMaximum, &(data[index]));
+	*/
 	index += buildAndSetAxisValue(_includeAxisFlags & JOYSTICK_INCLUDE_RZ_AXIS, _zAxisRotation, _rzAxisMinimum, _rzAxisMaximum, &(data[index]));
-	
+	/*
 	// Set Simulation Values
 	index += buildAndSetSimulationValue(_includeSimulatorFlags & JOYSTICK_INCLUDE_RUDDER, _rudder, _rudderMinimum, _rudderMaximum, &(data[index]));
 	index += buildAndSetSimulationValue(_includeSimulatorFlags & JOYSTICK_INCLUDE_THROTTLE, _throttle, _throttleMinimum, _throttleMaximum, &(data[index]));

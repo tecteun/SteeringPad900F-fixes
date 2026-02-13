@@ -415,6 +415,41 @@ void setup()
 
   //Serial.begin(230400);
 
+  // START DISPLAY ///////////////////////////////////////////////
+  oled.begin(&Adafruit128x32, I2C_ADDRESS);
+  oled.setFont(Stang5x7);
+
+  // intro animation
+  // use timer1 for some pseudo random noise
+  TCCR1A = 0; 
+  TCCR1B = (1 << CS10); // no prescaler
+  byte c = 25;
+  while (c-- > 0) {
+    for (byte page = 0; page < 4; page++) {
+      oled.setRow(page);
+      oled.setCol(0);
+      for (byte col = 0; col < 128; col++) {
+        oled.ssd1306WriteRam((0xFF ^ TCNT1L)+analogRead(A0));
+      }
+    }
+  }
+  TCCR1B = 0;
+ /*
+  byte c = 25;
+  while (c-- > 0) {
+    for (byte page = 0; page < 4; page++) {
+      oled.setRow(page);
+      oled.setCol(0);
+  
+      for (byte col = 0; col < 128; col++) {
+        float v = sin((col + c) * col/page);   // smooth wave
+        uint8_t b = (v > 0) ? 0xFF : 0x00; // binary ON/OFF
+        oled.ssd1306WriteRam(b);
+      }
+    }
+  }
+  */
+  
   #if ADS_INTERRUPT_PIN_0_ENABLED
   // disable interrupt during setup if previously enabled, prevent interference
   ADS.setComparatorQueConvert(ADS1x15_COMP_QUE_CONV_DISABLE);
@@ -477,37 +512,6 @@ void setup()
   #else
   ADS.setConversionDelay(1); // 1ms (default: 8)
   #endif
-  
-  // START DISPLAY ///////////////////////////////////////////////
-  oled.begin(&Adafruit128x32, I2C_ADDRESS);
-  oled.setFont(Stang5x7);
-
-/*
-  byte c = 25;
-  while (c-- > 0) {
-    for (byte page = 0; page < 4; page++) {
-      oled.setRow(page);
-      oled.setCol(0);
-      for (byte col = 0; col < 128; col++) {
-        oled.ssd1306WriteRam(random(0, 256));
-      }
-    }
-  }
- */
-  byte c = 25;
-  while (c-- > 0) {
-    for (byte page = 0; page < 4; page++) {
-      oled.setRow(page);
-      oled.setCol(0);
-  
-      for (byte col = 0; col < 128; col++) {
-        float v = sin((col + c) * col/page);   // smooth wave
-        uint8_t b = (v > 0) ? 0xFF : 0x00; // binary ON/OFF
-        oled.ssd1306WriteRam(b);
-      }
-    }
-  }
-
 
   // START JOYSTICK //////////////////////////////////////////////
   Joystick.begin(false); // <- no autoupdate, end of mainloop does this

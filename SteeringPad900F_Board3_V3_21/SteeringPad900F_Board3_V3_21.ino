@@ -17,6 +17,8 @@
  * on windows this is found at
  * C:\Users\%USERNAME%\AppData\Local\Arduino15\packages\arduino\hardware\avr\boards.txt
  * 
+ * sketch folder
+ * C:\Users\%USERNAME%\AppData\Local\Temp\arduino\sketches\
  * 
 
 ##############################################################
@@ -424,7 +426,6 @@ void setup()
   // T300RS uses axis 5 (rZ) for throttle
   if(!digitalRead(4) || !digitalRead(7)){
      //0x2341 arduino id //27926
-     
      USBRename dummy = USBRename(
         "Steering Pad 900-F (T300RS mode)",
         "Thrustmaster",
@@ -582,8 +583,16 @@ void loop() {
     return;
   }
   if(!ADS.isReady() && RDY && !sampleReady){ // isReady seems to be inverted in Continuous Mode https://github.com/RobTillaart/ADS1X15/issues/97
+   
+    //detachInterrupt(digitalPinToInterrupt(0));
     byte lastRequest = ADS.lastRequest();
-    delayMicroseconds(8);
+    
+    ///
+    ADS.getValue(); // seems that this helps with getting the proper value when under load
+    ///
+    
+    //delayMicroseconds(8);
+    
     adsValues[lastRequest] = ADS.getValue();
     lastRequest++; //prepare to sample next channel
     if(lastRequest > 2){ 
@@ -594,6 +603,7 @@ void loop() {
       //delayMicroseconds(1160); //(1s/860SPS)
       RDY = false;
     }
+    //attachInterrupt(digitalPinToInterrupt(0), adsReady, RISING);
   }
   if(!sampleReady){
     return;

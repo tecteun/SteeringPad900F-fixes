@@ -616,7 +616,7 @@ void loop() {
   if(!RDY){
     return;
   }
-  if(!ADS.isReady() && RDY && !sampleReady){ // isReady seems to be inverted in Continuous Mode https://github.com/RobTillaart/ADS1X15/issues/97
+  if(RDY && !sampleReady){ // isReady seems to be inverted in Continuous Mode https://github.com/RobTillaart/ADS1X15/issues/97
    
     //detachInterrupt(digitalPinToInterrupt(0));
     byte lastRequest = ADS.lastRequest();

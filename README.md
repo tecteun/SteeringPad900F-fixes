@@ -9,7 +9,7 @@ This unofficial repo fixes a few issues with the 3.2 firmware found on https://w
 - more stable
 - more buttons
 - updated UI
-- compatibility with BeamNG, snowrunner, assetto corsa
+- compatibility with BeamNG, snowrunner, assetto corsa, misterfpga 
 - and more.. its nuts 🥜
 
 

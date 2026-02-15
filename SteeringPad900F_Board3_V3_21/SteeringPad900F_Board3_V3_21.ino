@@ -154,7 +154,6 @@ mmicro.build.extra_flags={build.usb_flags}
 //  ██ ██  ██ ██ ██      ██      ██    ██      ██ ██ ██    ██ ██  ██ ██      ██ 
 //  ██ ██   ████  ██████ ███████  ██████  ███████ ██  ██████  ██   ████ ███████ 
 
-#define CDC_DISABLED
 #include "src/usb_rename.h"
 #include "avdweb_AnalogReadFast.h"
 
@@ -616,7 +615,7 @@ void loop() {
   if(!RDY){
     return;
   }
-  if(RDY && !sampleReady){ // isReady seems to be inverted in Continuous Mode https://github.com/RobTillaart/ADS1X15/issues/97
+  if(RDY && !sampleReady){
    
     //detachInterrupt(digitalPinToInterrupt(0));
     byte lastRequest = ADS.lastRequest();
@@ -1831,52 +1830,58 @@ void showSensors(int16_t diffTime, int16_t steeringPosition){
     oled.print(empty);
 }
 
-void processBreakPedal(){
-   int16_t brakeFinalValue;
-  // BREAK PEDAL
-  if (brakeSensor < brakeSensorMin) brakeSensor = brakeSensorMin;
-  if (brakeSensor > brakeSensorMax) brakeSensor = brakeSensorMax;
-  switch (brakeEase)
-  {
-    case EASEIN:
-    brakeFinalValue = EaseIn(brakeSensor, brakeSensorMin, brakeSensorMax, joystickMin, joystickMax);
-    break;
-    
-    case LINEAR:
-    brakeFinalValue = map(brakeSensor, brakeSensorMin, brakeSensorMax, joystickMin, joystickMax);
-    break;
+static inline int16_t processPedal(
+    int16_t value,
+    int16_t minVal,
+    int16_t maxVal,
+    EasingMode ease
+){
+    if (value < minVal) value = minVal;
+    if (value > maxVal) value = maxVal;
 
-    case EASEOUT:
-    brakeFinalValue = EaseOut(brakeSensor, brakeSensorMin, brakeSensorMax, joystickMin, joystickMax);
-    break;
-  }
-  Joystick.setYAxis(brakeFinalValue);
+    switch (ease) {
+        case EASEIN:
+            return EaseIn(value, minVal, maxVal, joystickMin, joystickMax);
+
+        case EASEOUT:
+            return EaseOut(value, minVal, maxVal, joystickMin, joystickMax);
+
+        default: // LINEAR
+            return map(value, minVal, maxVal, joystickMin, joystickMax);
+    }
 }
 
-void processAccelleratorPedal(){
-  int16_t acceleratorFinalValue;
-  // ACCELERATOR PEDAL
-  if (acceleratorSensor < acceleratorSensorMin) acceleratorSensor = acceleratorSensorMin;
-  if (acceleratorSensor > acceleratorSensorMax) acceleratorSensor = acceleratorSensorMax;
-  switch (acceleratorEase)
-  {
-    case EASEIN:
-      acceleratorFinalValue = EaseIn(acceleratorSensor, acceleratorSensorMin, acceleratorSensorMax, joystickMin, joystickMax);
-      break;
-      
-    case LINEAR:
-      acceleratorFinalValue = map(acceleratorSensor, acceleratorSensorMin, acceleratorSensorMax, joystickMin, joystickMax);
-      break;
+void processBreakPedal()
+{
+    int16_t v = processPedal(
+        brakeSensor,
+        brakeSensorMin,
+        brakeSensorMax,
+        brakeEase
+    );
+    Joystick.setYAxis(v);
+}
 
-    case EASEOUT:
-      acceleratorFinalValue = EaseOut(acceleratorSensor, acceleratorSensorMin, acceleratorSensorMax, joystickMin, joystickMax);
-      break;
-  }
-  if(altMode){
-    Joystick.setRzAxis(acceleratorFinalValue);
-  }else{
-    Joystick.setZAxis(acceleratorFinalValue);
-  }
+void processAccelleratorPedal()
+{
+    int16_t v = processPedal(
+        acceleratorSensor,
+        acceleratorSensorMin,
+        acceleratorSensorMax,
+        acceleratorEase
+    );
+
+    if (altMode)
+        Joystick.setRzAxis(v);
+    else
+        Joystick.setZAxis(v);
+}
+
+int16_t clamp255(int16_t v)
+{
+    if (v > 255)  return 255;
+    if (v < -255) return -255;
+    return v;
 }
 
 // SEND DATA TO JOYSTICK
@@ -1896,7 +1901,7 @@ int16_t ProcessDataAndApply(unsigned long currentMillis)
   Joystick.getForce(forces);
 
   // 4. Limitar força total
-  int16_t finalForce = finalForce = constrain(forces[0], -255, 255);
+  int16_t finalForce = finalForce = clamp255(forces[0]);
 
   if (forces[0] > 0)
   {
@@ -1963,7 +1968,7 @@ int16_t mapLUT(int16_t inputValue)
 
 void StoreData()
 {
-  // ADDRESS BOOK
+   // ADDRESS BOOK
   // 0 (22 bytes) Steering LUT Array
   // 21
   //////////////////////////////////
@@ -1982,67 +1987,62 @@ void StoreData()
   //////////////////////////////////
   // 34 (1 byte) Accelerator Easing Mode
   //////////////////////////////////
+    uint16_t addr = 0;
 
-  // Steering LUT Array
-  for (i = 0; i < 11; i++)
-  {
-    eeprom_update_word((uint16_t*)(i * sizeof(int16_t)), steeringSensorMapLUT[i]);
-  }
-  
-  // Brake Pedal
-  eeprom_update_word((uint16_t*)22, brakeSensorMin);
-  eeprom_update_word((uint16_t*)24, brakeSensorMax);
-  
-  // Accelerator Pedal
-  eeprom_update_word((uint16_t*)26, acceleratorSensorMin);
-  eeprom_update_word((uint16_t*)28, acceleratorSensorMax);
-  
-  // Force Feedback Gain
-  eeprom_update_word((uint16_t*)30, forceGain);
-  
-  // Force Feedback Active
-  eeprom_update_byte((uint8_t*)32, forceActive);
+    // Steering LUT Array (11 × uint16_t = 22 bytes)
+    for (uint8_t i = 0; i < 11; i++, addr += 2) {
+        eeprom_update_word((uint16_t*)addr, steeringSensorMapLUT[i]);
+    }
 
-  // Store Easing Modes as one byte each
-  eeprom_update_byte((uint8_t*)33, (uint8_t) brakeEase);
-  eeprom_update_byte((uint8_t*)34, (uint8_t) acceleratorEase);
+    // Brake pedal
+    eeprom_update_word((uint16_t*)addr, brakeSensorMin); addr += 2;
+    eeprom_update_word((uint16_t*)addr, brakeSensorMax); addr += 2;
 
-  // Sensordata active
-  eeprom_update_byte((uint8_t*)35, showSensorsActive);
+    // Accelerator pedal
+    eeprom_update_word((uint16_t*)addr, acceleratorSensorMin); addr += 2;
+    eeprom_update_word((uint16_t*)addr, acceleratorSensorMax); addr += 2;
+
+    // Force feedback gain
+    eeprom_update_word((uint16_t*)addr, forceGain); addr += 2;
+
+    // Force feedback active
+    eeprom_update_byte((uint8_t*)addr, forceActive); addr++;
+
+    // Easing modes
+    eeprom_update_byte((uint8_t*)addr, (uint8_t)brakeEase); addr++;
+    eeprom_update_byte((uint8_t*)addr, (uint8_t)acceleratorEase); addr++;
+
+    // Sensor data active
+    eeprom_update_byte((uint8_t*)addr, showSensorsActive);
 }
 
 void ReadData()
 {
+    uint16_t addr = 0;
 
-  // Steering LUT Array
-  for (i = 0; i < 11; i++)
-  {
-    steeringSensorMapLUT[i] = eeprom_read_word((uint16_t*)(i * sizeof(int16_t)));
-    //Serial.println(steeringSensorMapLUT[i]);
-  }
+    // Steering LUT Array (11 × uint16_t = 22 bytes)
+    for (uint8_t i = 0; i < 11; i++, addr += 2) {
+        steeringSensorMapLUT[i] = eeprom_read_word((uint16_t*)addr);
+    }
 
-  // Break Pedal
-  brakeSensorMin = eeprom_read_word((uint16_t*)22);
-  brakeSensorMax = eeprom_read_word((uint16_t*)24);
+    // Brake pedal
+    brakeSensorMin = eeprom_read_word((uint16_t*)addr); addr += 2;
+    brakeSensorMax = eeprom_read_word((uint16_t*)addr); addr += 2;
 
-  // Accelerator Pedal
-  acceleratorSensorMin = eeprom_read_word((uint16_t*)26);
-  acceleratorSensorMax = eeprom_read_word((uint16_t*)28);
+    // Accelerator pedal
+    acceleratorSensorMin = eeprom_read_word((uint16_t*)addr); addr += 2;
+    acceleratorSensorMax = eeprom_read_word((uint16_t*)addr); addr += 2;
 
-  // Force Feedback Gain
-  forceGain = eeprom_read_word((uint16_t*)30);
-  
-  // Force Feedback Active
-  forceActive = eeprom_read_byte((uint8_t*)32);
+    // Force feedback gain
+    forceGain = eeprom_read_word((uint16_t*)addr); addr += 2;
 
-  // Read the Easing Modes
-  uint8_t temp;
-  temp = eeprom_read_byte((uint8_t*)33);
-  brakeEase = static_cast<EasingMode>(temp);
-  
-  temp = eeprom_read_byte((uint8_t*)34);
-  acceleratorEase = static_cast<EasingMode>(temp);
+    // Force feedback active
+    forceActive = eeprom_read_byte((uint8_t*)addr); addr++;
 
-  // Sensordata active
-  showSensorsActive = eeprom_read_byte((uint8_t*)35);
+    // Easing modes
+    brakeEase = static_cast<EasingMode>(eeprom_read_byte((uint8_t*)addr)); addr++;
+    acceleratorEase = static_cast<EasingMode>(eeprom_read_byte((uint8_t*)addr)); addr++;
+
+    // Sensor data active
+    showSensorsActive = eeprom_read_byte((uint8_t*)addr);
 }

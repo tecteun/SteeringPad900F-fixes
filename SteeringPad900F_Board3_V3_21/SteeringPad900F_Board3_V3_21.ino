@@ -676,6 +676,8 @@ void loop() {
   }
   #endif
 
+  // end transmission to oled, OPTIMIZE_I2C does not end transmission, interferes with ADS1115
+  wireInterface.endTransmission();
   #if ADS_INTERRUPT_PIN_0_ENABLED
   // gather new sample in next loop
   sampleReady = false;

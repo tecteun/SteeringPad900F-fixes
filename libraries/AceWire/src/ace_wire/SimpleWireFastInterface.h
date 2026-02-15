@@ -84,7 +84,7 @@ class SimpleWireFastInterface {
      * @param addr I2C address of slave device
      * @return 0 if ACK, 1 if NACK
      */
-	uint8_t beginTransmission(uint8_t addr, bool hs = true) const {
+	uint8_t beginTransmission(uint8_t addr, bool hs = false) const {
 	  // --- HS MODE MASTER CODE SEQUENCE ---
 
 	  // 1. START condition
@@ -98,12 +98,14 @@ class SimpleWireFastInterface {
 		  //    We use 0x08 (00001 000) unless you want multi-master arbitration.
 		  uint8_t masterCode = 0x08;
 		  write(masterCode);
+		  sendNack();
 
 		  // 3. Repeated START
 		  dataHigh();
 		  clockHigh();
 		  dataLow();
 		  clockLow();
+		  
 	  }
 	  // --- NORMAL ADDRESS PHASE ---
 

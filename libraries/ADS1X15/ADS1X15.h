@@ -476,7 +476,7 @@ bool ADS1X15<T_WIREI>::begin()
 template<typename T_WIREI>
 bool ADS1X15<T_WIREI>::isConnected()
 {
-  _wire->beginTransmission(_address);
+  _wire->beginTransmission(_address, true);
   return (_wire->endTransmission() == 0);
 }
 
@@ -839,7 +839,7 @@ void ADS1X15<T_WIREI>::_requestADC(uint16_t readmode)
 template<typename T_WIREI>
 bool ADS1X15<T_WIREI>::_writeRegister(uint8_t address, uint8_t reg, uint16_t value)
 {
-  _wire->beginTransmission(address);
+  _wire->beginTransmission(address, true);
   _wire->write((uint8_t)reg);
   _wire->write((uint8_t)(value >> 8));
   _wire->write((uint8_t)(value & 0xFF));
@@ -855,7 +855,7 @@ bool ADS1X15<T_WIREI>::_writeRegister(uint8_t address, uint8_t reg, uint16_t val
 template<typename T_WIREI>
 uint16_t ADS1X15<T_WIREI>::_readRegister(uint8_t address, uint8_t reg)
 {
-  _wire->beginTransmission(address);
+  _wire->beginTransmission(address, true);
   _wire->write(reg);
   int rv = _wire->endTransmission();
   if (rv == 0)

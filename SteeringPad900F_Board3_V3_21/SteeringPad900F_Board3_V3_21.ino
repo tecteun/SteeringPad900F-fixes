@@ -155,7 +155,7 @@ mmicro.build.extra_flags={build.usb_flags}
 //  ██ ██   ████  ██████ ███████  ██████  ███████ ██  ██████  ██   ████ ███████ 
 
 #include "src/usb_rename.h"
-#include "avdweb_AnalogReadFast.h"
+//#include "avdweb_AnalogReadFast.h"
 
 // ADC
 const uint8_t SCL_PIN = SCL;
@@ -1270,10 +1270,10 @@ void ReadAnalogSensors()
 
 void ReadButtons(unsigned long currentMillis)
 {
-  sensorValues[0] = analogReadFast(A0);
-  sensorValues[1] = analogReadFast(A1);
-  sensorValues[2] = analogReadFast(A2);
-  sensorValues[3] = analogReadFast(A3);
+  sensorValues[0] = analogRead(A0);
+  sensorValues[1] = analogRead(A1);
+  sensorValues[2] = analogRead(A2);
+  sensorValues[3] = analogRead(A3);
 /*
   for (i = 0; i < 15; i++)
   {

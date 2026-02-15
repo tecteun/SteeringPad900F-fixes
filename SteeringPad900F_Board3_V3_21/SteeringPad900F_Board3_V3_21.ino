@@ -1018,7 +1018,7 @@ void MenuOperations()
         brakeSensorMin = brakeSensor;
         brakePedalCalibrationStep++;
         DisplayTitleCalibrate();
-        oled.println(F("Full pess minus 1mm"));
+        oled.println(F("Full press minus 1mm"));
         oled.print(F("Maximum"));
         DisplayValueText();
         break;
@@ -1716,22 +1716,26 @@ void showSensorsSM(int16_t diffTime, int16_t steeringPosition)
             pos = 0;
             memset(buf, 0, sizeof(buf)); //clear buf
             for (uint8_t i = 1; i <= NUMBUTTONS; i++) {
-              if (button[i]) {
-                // print tens digit only if >= 10
-                if (i >= 10) {
-                  buf[pos++] = '0' + (i / 10);
-                }
-                buf[pos++] = '0' + (i % 10);  // ones digit
-                buf[pos++] = ' ';            // space
+              if (!button[i]) continue;
+              
+              // print tens digit only if >= 10
+              if (i >= 10) {
+                buf[pos++] = '0' + (i / 10);
               }
+              buf[pos++] = '0' + (i % 10);  // ones digit
+              buf[pos++] = ',';            
             }
-            buf[pos] = '\0';
+            if(pos > 0){
+              buf[pos-1] = '\0';
+            }
         }
         break;
         case 2: 
         {
             oled.clearToEOL();
-            oled.print(buf);
+            if(pos > 0){
+              oled.print(buf);
+            }
             oled.setRow(2); 
             oled.setCol(0);
         }

@@ -306,7 +306,7 @@ RDY = true;
 
 
 // BUTTONS
-const int errorMargin = 4; // Adjustable error margin for reading the buttons
+const int errorMargin = 7; // Adjustable error margin for reading the buttons
 
 const int thresholds[7] = 
 {

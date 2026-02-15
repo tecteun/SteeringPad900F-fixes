@@ -84,6 +84,37 @@ class SimpleWireFastInterface {
      * @param addr I2C address of slave device
      * @return 0 if ACK, 1 if NACK
      */
+	uint8_t beginTransmission(uint8_t addr, bool hs = false) const {
+	  // --- HS MODE MASTER CODE SEQUENCE ---
+
+	  // 1. START condition
+	  clockHigh();
+	  dataHigh();
+	  dataLow();
+	  clockLow();
+
+	  if(hs){
+		  // 2. Send HS master code (0x08–0x0F)
+		  //    We use 0x08 (00001 000) unless you want multi-master arbitration.
+		  uint8_t masterCode = 0x08;
+		  write(masterCode);
+
+		  // 3. Repeated START
+		  dataHigh();
+		  clockHigh();
+		  dataLow();
+		  clockLow();
+	  }
+	  // --- NORMAL ADDRESS PHASE ---
+
+	  // 4. Send real slave address (write mode)
+	  uint8_t effectiveAddr = (addr << 1) | 0x00;
+	  uint8_t res = write(effectiveAddr);
+
+	  return res ^ 0x1; // return 0 on ACK, 1 on NACK
+	}
+
+	 /*
     uint8_t beginTransmission(uint8_t addr) const {
       clockHigh();
       dataHigh();
@@ -95,7 +126,7 @@ class SimpleWireFastInterface {
       uint8_t effectiveAddr = (addr << 1) | 0x00;
       uint8_t res = write(effectiveAddr);
       return res ^ 0x1;
-    }
+    }*/
 
     /**
      * Send the data byte on the data bus, with MSB first as specified by I2C.
@@ -208,27 +239,6 @@ class SimpleWireFastInterface {
 
       return data;
     }
-	
-	
-	void sendHsMasterCode(uint8_t code = 0x08) const {
-		// HS master code must be 00001xxx
-		code = 0x08 | (code & 0x07);
-
-		// START condition
-		clockHigh();
-		dataHigh();
-		dataLow();
-		clockLow();
-
-		// Send master code byte
-		write(code);
-
-		// Repeated START
-		dataHigh();
-		clockHigh();
-		dataLow();
-		clockLow();
-	}
 
     // Use default copy constructor and assignment operator.
     SimpleWireFastInterface(const SimpleWireFastInterface&) = default;

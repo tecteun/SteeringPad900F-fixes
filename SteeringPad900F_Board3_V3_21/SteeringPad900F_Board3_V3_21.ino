@@ -155,7 +155,6 @@ mmicro.build.extra_flags={build.usb_flags}
 //  ██ ██   ████  ██████ ███████  ██████  ███████ ██  ██████  ██   ████ ███████ 
 
 #include "src/usb_rename.h"
-//#include "avdweb_AnalogReadFast.h"
 
 // ADC
 const uint8_t SCL_PIN = SCL;

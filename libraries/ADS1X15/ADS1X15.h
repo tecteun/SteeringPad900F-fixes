@@ -839,6 +839,7 @@ void ADS1X15<T_WIREI>::_requestADC(uint16_t readmode)
 template<typename T_WIREI>
 bool ADS1X15<T_WIREI>::_writeRegister(uint8_t address, uint8_t reg, uint16_t value)
 {
+	_wire->sendHsMasterCode();
   _wire->beginTransmission(address);
   _wire->write((uint8_t)reg);
   _wire->write((uint8_t)(value >> 8));
@@ -855,6 +856,7 @@ bool ADS1X15<T_WIREI>::_writeRegister(uint8_t address, uint8_t reg, uint16_t val
 template<typename T_WIREI>
 uint16_t ADS1X15<T_WIREI>::_readRegister(uint8_t address, uint8_t reg)
 {
+	_wire->sendHsMasterCode();
   _wire->beginTransmission(address);
   _wire->write(reg);
   int rv = _wire->endTransmission();

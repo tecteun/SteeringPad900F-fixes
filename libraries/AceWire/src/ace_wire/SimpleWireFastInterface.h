@@ -208,6 +208,27 @@ class SimpleWireFastInterface {
 
       return data;
     }
+	
+	
+	void sendHsMasterCode(uint8_t code = 0x08) const {
+		// HS master code must be 00001xxx
+		code = 0x08 | (code & 0x07);
+
+		// START condition
+		clockHigh();
+		dataHigh();
+		dataLow();
+		clockLow();
+
+		// Send master code byte
+		write(code);
+
+		// Repeated START
+		dataHigh();
+		clockHigh();
+		dataLow();
+		clockLow();
+	}
 
     // Use default copy constructor and assignment operator.
     SimpleWireFastInterface(const SimpleWireFastInterface&) = default;

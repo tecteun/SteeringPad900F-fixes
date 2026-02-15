@@ -588,44 +588,14 @@ volatile bool sofTick = false;
 #define debug 0
 bool sampleReady = false;
 void loop() {
-  static int16_t diffTime = 1;
   unsigned long currentMillis = millis();
-  
-  #if debug
-  unsigned long us = micros();
-  static unsigned long lastTime = 0;
-  static int rps = 0;
-  #endif
-  
-  /*
-    // Check SOF flag manually
-    // To send hid packet exatly at start of frame
-    if (UDINT & (1 << SOFI)) {
-      UDINT &= ~(1 << SOFI);   // clear SOF flag
-      sofTick = true;
-    }
-  
-    // update
-    if(sofTick){
-      sofTick = false;
-      Joystick.sendState();
-    }
-  */
+  static int16_t diffTime = 1;
   #if ADS_INTERRUPT_PIN_0_ENABLED
   if(!RDY){
     return;
   }
-  if(RDY && !sampleReady){
-   
-    //detachInterrupt(digitalPinToInterrupt(0));
+  if(RDY && !sampleReady){ //gather new complete sample
     byte lastRequest = ADS.lastRequest();
-    
-    ///
-    ADS.getValue(); // seems that this helps with getting the proper value when under load
-    ///
-    
-    //delayMicroseconds(8);
-    
     adsValues[lastRequest] = ADS.getValue();
     lastRequest++; //prepare to sample next channel
     if(lastRequest > 2){ 
@@ -636,12 +606,19 @@ void loop() {
       //delayMicroseconds(1160); //(1s/860SPS)
       RDY = false;
     }
-    //attachInterrupt(digitalPinToInterrupt(0), adsReady, RISING);
   }
+  //iterate if sample not ready yet
   if(!sampleReady){
     return;
   }
   #endif
+  #if debug
+  unsigned long us = micros();
+  static unsigned long lastTime = 0;
+  static int rps = 0;
+  #endif
+  
+
 
   // OPERATION MODES
   // 0 - In Game
@@ -1277,11 +1254,17 @@ void ReadAnalogSensors()
   brakeSensor = adsValues[2];
   acceleratorSensor = adsValues[0];
   //Serial.println(steeringSensor);
-
   #else
   steeringSensor = ADS.readADC(1);
   brakeSensor = ADS.readADC(2);
   acceleratorSensor = ADS.readADC(0);
+  #endif
+  #if debug
+  Serial.print(steeringSensor);
+  Serial.print('\t');
+  Serial.print(brakeSensor);
+  Serial.print('\t');
+  Serial.println(acceleratorSensor);
   #endif
 }
 

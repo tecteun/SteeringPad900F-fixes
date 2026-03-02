@@ -624,6 +624,7 @@ void loop() {
   // 1 - In Menu
   // 2 - In Confirmation
   //Joystick.getUSBPID();  // update FFB
+  noInterrupts();
   ReadButtons(currentMillis);
   ReadAnalogSensors();
   // IN GAME MODE
@@ -654,6 +655,7 @@ void loop() {
     }
   
   }
+  interrupts();
 
   if (operationMode == 1){
     MenuOperations();  // IN MENU MODE
